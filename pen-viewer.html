@@ -155,19 +155,21 @@
     </div>
     
     <div class="panel-row">
-      <button onclick="loadSample()">Load Sample</button>
+      <button onclick="loadSample()">Reload</button>
+      <button class="secondary" onclick="resetView()">Reset View</button>
       <button class="secondary" onclick="downloadCanvas()">⬇ PNG</button>
     </div>
     
     <div class="zoom-control">
       <span>Zoom:</span>
-      <input type="range" id="zoomSlider" min="25" max="200" value="100" onchange="setZoom(this.value)">
+      <input type="range" id="zoomSlider" min="25" max="400" value="100" onchange="setZoom(this.value)">
       <span id="zoomValue">100%</span>
     </div>
     
     <div class="info">
       Canvas: <span id="canvasSize">-</span><br>
-      Drag & drop a .pen file to view
+      🖱️ Drag to pan | Scroll to zoom<br>
+      Drop .pen file to view
     </div>
   </div>
   
@@ -187,6 +189,13 @@ const ctx = canvas.getContext('2d');
 let variables = {};
 let currentZoom = 100;
 let penDocument = null;
+
+// 拖拽平移状态
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let panX = 0;
+let panY = 0;
 
 // 初始化画布大小
 function resizeCanvas() {
@@ -494,18 +503,20 @@ function renderDocument(doc) {
     });
     
     // 计算缩放比例以适应画布
+    const baseScale = currentZoom / 100;
     const scaleX = canvas.width / maxWidth;
     const scaleY = canvas.height / maxHeight;
-    const scale = Math.min(scaleX, scaleY, 1);
+    const fitScale = Math.min(scaleX, scaleY, 1);
+    const scale = fitScale * baseScale;
     
     // 计算偏移使内容从正确位置开始
-    const offsetX = minX < 0 ? -minX * scale : 0;
-    const offsetY = minY < 0 ? -minY * scale : 0;
+    const offsetX = (minX < 0 ? -minX : 0) + panX;
+    const offsetY = (minY < 0 ? -minY : 0) + panY;
     
     // 应用变换
     ctx.save();
     ctx.translate(offsetX, offsetY);
-    if (scale < 1) ctx.scale(scale, scale);
+    ctx.scale(scale, scale);
     
     doc.children.forEach(child => {
       let width = resolveSize(child.width, maxWidth);
@@ -531,13 +542,60 @@ function loadAndRender(doc) {
 function setZoom(value) {
   currentZoom = parseInt(value);
   document.getElementById('zoomValue').textContent = currentZoom + '%';
-  canvas.style.transform = `scale(${currentZoom / 100})`;
-  canvas.style.transformOrigin = 'top left';
+  if (penDocument) renderDocument(penDocument);
+}
+
+// 重置视图
+function resetView() {
+  panX = 0;
+  panY = 0;
+  currentZoom = 100;
+  document.getElementById('zoomSlider').value = 100;
+  document.getElementById('zoomValue').textContent = '100%';
+  if (penDocument) renderDocument(penDocument);
 }
 
 // 切换面板
 function togglePanel() {
   document.body.classList.toggle('panel-hidden');
+}
+
+// 设置拖拽
+function setupPan() {
+  canvas.style.cursor = 'grab';
+  
+  canvas.addEventListener('mousedown', (e) => {
+    // 忽略控制面板区域的点击
+    if (e.clientX < 200 && e.clientY < 300) return;
+    
+    isDragging = true;
+    dragStartX = e.clientX - panX;
+    dragStartY = e.clientY - panY;
+    canvas.style.cursor = 'grabbing';
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    panX = e.clientX - dragStartX;
+    panY = e.clientY - dragStartY;
+    if (penDocument) renderDocument(penDocument);
+  });
+  
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    canvas.style.cursor = 'grab';
+  });
+  
+  // 滚轮缩放
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -10 : 10;
+    const newZoom = Math.max(25, Math.min(400, currentZoom + delta));
+    currentZoom = newZoom;
+    document.getElementById('zoomSlider').value = newZoom;
+    document.getElementById('zoomValue').textContent = newZoom + '%';
+    if (penDocument) renderDocument(penDocument);
+  }, { passive: false });
 }
 
 // 加载示例
@@ -612,6 +670,7 @@ function setupDragDrop() {
 // 初始化
 window.onload = () => {
   resizeCanvas();
+  setupPan();
   setupDragDrop();
   loadSample();
 };
