@@ -1,0 +1,231 @@
+{
+  "version": "1.0",
+  "variables": {
+    "color.primary": {
+      "type": "color",
+      "value": "#3b82f6"
+    },
+    "color.background": {
+      "type": "color",
+      "value": "#ffffff"
+    },
+    "color.text": {
+      "type": "color",
+      "value": "#1f2937"
+    },
+    "spacing.base": {
+      "type": "number",
+      "value": 16
+    }
+  },
+  "children": [
+    {
+      "id": "main-frame",
+      "type": "frame",
+      "name": "Main Container",
+      "x": 0,
+      "y": 0,
+      "width": 375,
+      "height": 812,
+      "fill": "$color.background",
+      "layout": "vertical",
+      "justifyContent": "start",
+      "alignItems": "center",
+      "padding": 24,
+      "gap": 16,
+      "children": [
+        {
+          "id": "header",
+          "type": "frame",
+          "name": "Header",
+          "width": "fill_container",
+          "height": 60,
+          "fill": "#f3f4f6",
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "padding": [0, 16],
+          "children": [
+            {
+              "id": "logo",
+              "type": "text",
+              "content": "Pencil",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "fill": "$color.primary"
+            },
+            {
+              "id": "menu-btn",
+              "type": "frame",
+              "width": 40,
+              "height": 40,
+              "fill": "#e5e7eb",
+              "cornerRadius": 20
+            }
+          ]
+        },
+        {
+          "id": "hero-section",
+          "type": "frame",
+          "name": "Hero Section",
+          "width": "fill_container",
+          "height": 200,
+          "fill": "$color.primary",
+          "cornerRadius": 16,
+          "layout": "vertical",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "gap": 12,
+          "children": [
+            {
+              "id": "hero-title",
+              "type": "text",
+              "content": "Welcome to Pencil",
+              "fontSize": 28,
+              "fontWeight": "700",
+              "fill": "#ffffff",
+              "textAlign": "center"
+            },
+            {
+              "id": "hero-subtitle",
+              "type": "text",
+              "content": "Design right where you code",
+              "fontSize": 16,
+              "fill": "#e0e7ff",
+              "textAlign": "center"
+            }
+          ]
+        },
+        {
+          "id": "card-1",
+          "type": "frame",
+          "name": "Feature Card",
+          "reusable": true,
+          "width": "fill_container",
+          "height": 120,
+          "fill": "#ffffff",
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#e5e7eb"
+          },
+          "effect": {
+            "type": "shadow",
+            "shadowType": "outer",
+            "offset": { "x": 0, "y": 4 },
+            "blur": 12,
+            "color": "#0000001a"
+          },
+          "cornerRadius": 12,
+          "layout": "horizontal",
+          "justifyContent": "start",
+          "alignItems": "center",
+          "padding": 16,
+          "gap": 16,
+          "children": [
+            {
+              "id": "card-icon",
+              "type": "frame",
+              "width": 48,
+              "height": 48,
+              "fill": "#dbeafe",
+              "cornerRadius": 12
+            },
+            {
+              "id": "card-content",
+              "type": "frame",
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "start",
+              "gap": 4,
+              "children": [
+                {
+                  "id": "card-title",
+                  "type": "text",
+                  "content": "Vector Design",
+                  "fontSize": 18,
+                  "fontWeight": "600",
+                  "fill": "$color.text"
+                },
+                {
+                  "id": "card-desc",
+                  "type": "text",
+                  "content": "Create beautiful designs with precision",
+                  "fontSize": 14,
+                  "fill": "#6b7280"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "button-primary",
+          "type": "frame",
+          "name": "Primary Button",
+          "reusable": true,
+          "width": 200,
+          "height": 48,
+          "fill": "$color.primary",
+          "cornerRadius": 24,
+          "layout": "horizontal",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "btn-text",
+              "type": "text",
+              "content": "Get Started",
+              "fontSize": 16,
+              "fontWeight": "600",
+              "fill": "#ffffff",
+              "textAlign": "center"
+            }
+          ]
+        },
+        {
+          "id": "shapes-demo",
+          "type": "frame",
+          "name": "Shapes Demo",
+          "width": "fill_container",
+          "height": 100,
+          "layout": "horizontal",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "rect-1",
+              "type": "rectangle",
+              "width": 60,
+              "height": 60,
+              "fill": "#ef4444",
+              "cornerRadius": 8
+            },
+            {
+              "id": "ellipse-1",
+              "type": "ellipse",
+              "width": 60,
+              "height": 60,
+              "fill": "#22c55e"
+            },
+            {
+              "id": "rect-2",
+              "type": "rectangle",
+              "width": 60,
+              "height": 60,
+              "fill": {
+                "type": "gradient",
+                "gradientType": "linear",
+                "rotation": 45,
+                "colors": [
+                  { "color": "#8b5cf6", "position": 0 },
+                  { "color": "#ec4899", "position": 1 }
+                ]
+              },
+              "cornerRadius": 30
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

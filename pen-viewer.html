@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>.pen Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 { color: #fff; margin-bottom: 20px; }
+    #canvas-container {
+      background: #0f0f1a;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    canvas {
+      background: #fff;
+      border-radius: 8px;
+    }
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background: #2563eb; }
+    .info {
+      color: #888;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>.pen File Viewer</h1>
+  <div id="canvas-container">
+    <canvas id="canvas" width="375" height="812"></canvas>
+  </div>
+  <div class="controls">
+    <button onclick="loadSample()">Load sample.pen</button>
+    <button onclick="downloadCanvas()">Download PNG</button>
+  </div>
+  <div class="info">Canvas: 375 x 812 (iPhone SE size)</div>
+
+<script>
+// ====== Pen Renderer ======
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// 变量存储
+let variables = {};
+
+// 解析变量
+function resolveVariables(doc) {
+  if (doc.variables) {
+    variables = {};
+    for (const [key, val] of Object.entries(doc.variables)) {
+      variables[key] = val.value;
+    }
+  }
+}
+
+// 解析颜色值（支持变量引用）
+function resolveColor(color) {
+  if (!color) return null;
+  if (typeof color === 'string') {
+    if (color.startsWith('$')) {
+      return variables[color.slice(1)] || color;
+    }
+    return color;
+  }
+  if (color.type === 'gradient') {
+    // TODO: 实现渐变
+    return color.colors?.[0]?.color || '#888';
+  }
+  return color;
+}
+
+// 解析尺寸值
+function resolveSize(val, parentSize = 0) {
+  if (val === 'fill_container') return parentSize;
+  if (val === 'fit_content') return null; // 需要计算子元素
+  if (typeof val === 'string' && val.startsWith('$')) {
+    return variables[val.slice(1)] || 0;
+  }
+  return val || 0;
+}
+
+// 绘制圆角矩形
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  radius = Math.min(radius || 0, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+// 绘制单个节点
+function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parentHeight = 0) {
+  const x = parentX + (node.x || 0);
+  const y = parentY + (node.y || 0);
+  const width = resolveSize(node.width, parentWidth);
+  const height = resolveSize(node.height, parentHeight);
+  
+  ctx.save();
+  
+  // 不透明度
+  if (node.opacity !== undefined) {
+    ctx.globalAlpha = node.opacity;
+  }
+  
+  switch (node.type) {
+    case 'frame':
+    case 'rectangle':
+      renderFrameOrRect(ctx, node, x, y, width, height);
+      break;
+      
+    case 'ellipse':
+      renderEllipse(ctx, node, x, y, width, height);
+      break;
+      
+    case 'text':
+      renderText(ctx, node, x, y, width, height);
+      break;
+      
+    case 'line':
+      renderLine(ctx, node, x, y, width, height);
+      break;
+      
+    default:
+      console.log('Unknown node type:', node.type);
+  }
+  
+  ctx.restore();
+  
+  // 渲染子元素
+  if (node.children && node.children.length > 0) {
+    renderChildren(ctx, node, x, y, width, height);
+  }
+}
+
+// 渲染 Frame 或 Rectangle
+function renderFrameOrRect(ctx, node, x, y, width, height) {
+  // 阴影效果
+  if (node.effect && node.effect.type === 'shadow') {
+    const shadow = node.effect;
+    ctx.shadowColor = resolveColor(shadow.color) || 'rgba(0,0,0,0.1)';
+    ctx.shadowBlur = shadow.blur || 0;
+    ctx.shadowOffsetX = shadow.offset?.x || 0;
+    ctx.shadowOffsetY = shadow.offset?.y || 0;
+  }
+  
+  // 填充
+  const fillColor = resolveColor(node.fill);
+  if (fillColor) {
+    drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+  }
+  
+  // 重置阴影以绘制边框
+  ctx.shadowColor = 'transparent';
+  
+  // 边框
+  if (node.stroke && node.stroke.fill) {
+    const strokeColor = resolveColor(node.stroke.fill);
+    if (strokeColor) {
+      drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = node.stroke.thickness || 1;
+      ctx.stroke();
+    }
+  }
+}
+
+// 渲染椭圆
+function renderEllipse(ctx, node, x, y, width, height) {
+  const fillColor = resolveColor(node.fill);
+  if (fillColor) {
+    ctx.beginPath();
+    ctx.ellipse(
+      x + width / 2, 
+      y + height / 2, 
+      width / 2, 
+      height / 2, 
+      0, 0, Math.PI * 2
+    );
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+  }
+}
+
+// 渲染文本
+function renderText(ctx, node, x, y, width, height) {
+  const fillColor = resolveColor(node.fill);
+  if (!fillColor) return;
+  
+  ctx.fillStyle = fillColor;
+  ctx.font = `${node.fontWeight || 'normal'} ${node.fontSize || 16}px -apple-system, sans-serif`;
+  ctx.textAlign = node.textAlign || 'left';
+  ctx.textBaseline = node.textAlignVertical === 'middle' ? 'middle' : 'top';
+  
+  const textX = node.textAlign === 'center' ? x + (width || 0) / 2 : x;
+  const textY = node.textAlignVertical === 'middle' ? y + (height || 0) / 2 : y;
+  
+  ctx.fillText(node.content || '', textX, textY);
+}
+
+// 渲染线条
+function renderLine(ctx, node, x, y, width, height) {
+  const strokeColor = resolveColor(node.stroke?.fill || node.fill);
+  if (!strokeColor) return;
+  
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + width, y + height);
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = node.stroke?.thickness || 2;
+  ctx.stroke();
+}
+
+// 渲染子元素（支持 flexbox 布局）
+function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight) {
+  if (!parent.children || parent.children.length === 0) return;
+  
+  const layout = parent.layout || 'none';
+  const padding = parent.padding || 0;
+  const gap = parent.gap || 0;
+  const justifyContent = parent.justifyContent || 'start';
+  const alignItems = parent.alignItems || 'start';
+  
+  // 计算 padding
+  let paddingTop, paddingRight, paddingBottom, paddingLeft;
+  if (Array.isArray(padding)) {
+    if (padding.length === 2) {
+      paddingTop = paddingBottom = padding[0];
+      paddingLeft = paddingRight = padding[1];
+    } else if (padding.length === 4) {
+      [paddingTop, paddingRight, paddingBottom, paddingLeft] = padding;
+    }
+  } else {
+    paddingTop = paddingRight = paddingBottom = paddingLeft = padding;
+  }
+  
+  const contentX = parentX + paddingLeft;
+  const contentY = parentY + paddingTop;
+  const contentWidth = parentWidth - paddingLeft - paddingRight;
+  const contentHeight = parentHeight - paddingTop - paddingBottom;
+  
+  if (layout === 'none') {
+    // 绝对定位
+    parent.children.forEach(child => {
+      renderNode(ctx, child, parentX, parentY, parentWidth, parentHeight);
+    });
+  } else if (layout === 'horizontal') {
+    // 水平布局
+    let currentX = contentX;
+    const totalGap = gap * (parent.children.length - 1);
+    const childrenWithWidth = parent.children.map(child => {
+      const w = resolveSize(child.width, contentWidth);
+      return { child, width: w === null ? 0 : w };
+    });
+    
+    // 计算总宽度
+    let totalWidth = childrenWithWidth.reduce((sum, { width }) => sum + width, 0) + totalGap;
+    
+    // justify alignment
+    let startX = contentX;
+    if (justifyContent === 'center') {
+      startX = contentX + (contentWidth - totalWidth) / 2;
+    } else if (justifyContent === 'end') {
+      startX = contentX + contentWidth - totalWidth;
+    } else if (justifyContent === 'space_between') {
+      const extraSpace = contentWidth - childrenWithWidth.reduce((sum, { width }) => sum + width, 0);
+      const spaceBetween = extraSpace / (parent.children.length - 1 || 1);
+      childrenWithWidth.forEach((item, i) => {
+        const childHeight = resolveSize(item.child.height, contentHeight);
+        let childY = contentY;
+        if (alignItems === 'center') {
+          childY = contentY + (contentHeight - childHeight) / 2;
+        } else if (alignItems === 'end') {
+          childY = contentY + contentHeight - childHeight;
+        }
+        
+        item.child.x = startX - parentX;
+        item.child.y = childY - parentY;
+        renderNode(ctx, item.child, startX, childY, item.width, childHeight);
+        
+        startX += item.width + (i < parent.children.length - 1 ? spaceBetween : 0);
+      });
+      return;
+    }
+    
+    childrenWithWidth.forEach((item, i) => {
+      const childHeight = resolveSize(item.child.height, contentHeight);
+      let childY = contentY;
+      if (alignItems === 'center') {
+        childY = contentY + (contentHeight - childHeight) / 2;
+      } else if (alignItems === 'end') {
+        childY = contentY + contentHeight - childHeight;
+      }
+      
+      item.child.x = startX - parentX;
+      item.child.y = childY - parentY;
+      renderNode(ctx, item.child, startX, childY, item.width, childHeight);
+      
+      startX += item.width + gap;
+    });
+    
+  } else if (layout === 'vertical') {
+    // 垂直布局
+    let currentY = contentY;
+    
+    parent.children.forEach((child, i) => {
+      const childWidth = resolveSize(child.width, contentWidth);
+      const childHeight = resolveSize(child.height, contentHeight);
+      
+      let childX = contentX;
+      if (alignItems === 'center') {
+        childX = contentX + (contentWidth - childWidth) / 2;
+      } else if (alignItems === 'end') {
+        childX = contentX + contentWidth - childWidth;
+      }
+      
+      child.x = childX - parentX;
+      child.y = currentY - parentY;
+      renderNode(ctx, child, childX, currentY, childWidth, childHeight);
+      
+      currentY += childHeight + gap;
+    });
+  }
+}
+
+// 渲染整个文档
+function renderDocument(doc) {
+  // 清空画布
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // 解析变量
+  resolveVariables(doc);
+  
+  // 渲染根节点
+  if (doc.children && doc.children.length > 0) {
+    doc.children.forEach(child => {
+      const width = resolveSize(child.width, canvas.width);
+      const height = resolveSize(child.height, canvas.height);
+      renderNode(ctx, child, child.x || 0, child.y || 0, width, height);
+    });
+  }
+  
+  console.log('Rendered', doc.children?.length || 0, 'root nodes');
+}
+
+// 加载示例文件
+async function loadSample() {
+  try {
+    const response = await fetch('sample.pen');
+    const text = await response.text();
+    const doc = JSON.parse(text);
+    renderDocument(doc);
+  } catch (err) {
+    console.error('Failed to load sample.pen:', err);
+    alert('Failed to load sample.pen. Make sure the file exists.');
+  }
+}
+
+// 下载画布
+function downloadCanvas() {
+  const link = document.createElement('a');
+  link.download = 'pen-render.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// 初始化
+window.onload = () => {
+  loadSample();
+};
+</script>
+</body>
+</html>
