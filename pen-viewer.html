@@ -207,43 +207,67 @@
     }
     
     .category-items {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      padding-left: 4px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      padding: 4px;
     }
     
     .component-item {
-      padding: 6px 10px;
+      padding: 6px;
       background: rgba(255,255,255,0.03);
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       color: #94a3b8;
-      font-size: 12px;
+      font-size: 11px;
       transition: all 0.2s;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      border: 1px solid transparent;
     }
     
     .component-item:hover {
       background: rgba(59, 130, 246, 0.15);
-      color: #fff;
+      border-color: rgba(59, 130, 246, 0.3);
     }
     
     .component-item.active {
-      background: rgba(59, 130, 246, 0.3);
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.5);
       color: #fff;
+    }
+    
+    .component-item .comp-thumbnail {
+      width: 60px;
+      height: 40px;
+      background: #ffffff;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .component-item .comp-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      width: 100%;
+      text-align: center;
     }
     
     .component-item .comp-name {
       font-weight: 500;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
     
     .component-item .comp-variant {
-      font-size: 10px;
+      font-size: 9px;
       color: #64748b;
-      margin-left: auto;
     }
     
     .component-item.active .comp-variant {
@@ -384,7 +408,7 @@ function extractComponents(node, parentX = 0, parentY = 0, result = []) {
   return result;
 }
 
-// 构建组件列表 UI
+// 构建组件列表 UI（带缩略图）
 function buildComponentsList() {
   const listEl = document.getElementById('componentsList');
   const countEl = document.getElementById('componentCount');
@@ -425,7 +449,6 @@ function buildComponentsList() {
   
   // 分类组件
   reusableComponents.forEach(comp => {
-    // 提取组件类型名（去掉变体后缀）
     const baseName = comp.name.split('/')[0];
     const category = componentCategory[baseName] || 'Other';
     categories[category].items.push(comp);
@@ -447,15 +470,19 @@ function buildComponentsList() {
       <div class="category-items" id="cat-${cat}">`;
     
     items.forEach(comp => {
-      // 解析变体名
       const parts = comp.name.split('/');
       const baseName = parts[0];
       const variant = parts.length > 1 ? parts.slice(1).join('/') : '';
       
       html += `<div class="component-item ${activeComponentId === comp.id ? 'active' : ''}" 
-                    onclick="focusComponent('${comp.id}')" title="${comp.name}">
-        <span class="comp-name">${baseName}</span>
-        ${variant ? `<span class="comp-variant">${variant}</span>` : ''}
+                    onclick="focusComponent('${comp.id}')" 
+                    data-component-id="${comp.id}"
+                    title="${comp.name}">
+        <canvas class="comp-thumbnail" id="thumb-${comp.id}" width="60" height="40"></canvas>
+        <div class="comp-info">
+          <span class="comp-name">${baseName}</span>
+          ${variant ? `<span class="comp-variant">${variant}</span>` : ''}
+        </div>
       </div>`;
     });
     
@@ -463,6 +490,134 @@ function buildComponentsList() {
   });
   
   listEl.innerHTML = html;
+  
+  // 异步渲染缩略图
+  requestAnimationFrame(() => {
+    reusableComponents.forEach(comp => {
+      renderComponentThumbnail(comp.id);
+    });
+  });
+}
+
+// 渲染组件缩略图
+function renderComponentThumbnail(componentId) {
+  const thumbCanvas = document.getElementById('thumb-' + componentId);
+  if (!thumbCanvas) return;
+  
+  const comp = components.find(c => c.id === componentId);
+  if (!comp || !penDocument) return;
+  
+  const thumbCtx = thumbCanvas.getContext('2d');
+  
+  // 清空缩略图
+  thumbCtx.clearRect(0, 0, 60, 40);
+  
+  // 找到组件节点
+  const node = findNodeById(penDocument, componentId);
+  if (!node) return;
+  
+  // 计算缩放
+  const nodeWidth = comp.width || 100;
+  const nodeHeight = comp.height || 40;
+  const scale = Math.min(60 / nodeWidth, 40 / nodeHeight) * 0.9;
+  
+  // 居中偏移
+  const offsetX = (60 - nodeWidth * scale) / 2;
+  const offsetY = (40 - nodeHeight * scale) / 2;
+  
+  // 渲染节点到缩略图
+  thumbCtx.save();
+  thumbCtx.translate(offsetX, offsetY);
+  thumbCtx.scale(scale, scale);
+  
+  // 简化渲染（只绘制背景和边框）
+  renderNodeThumbnail(thumbCtx, node, 0, 0, nodeWidth, nodeHeight);
+  
+  thumbCtx.restore();
+}
+
+// 查找节点
+function findNodeById(doc, id, node = null) {
+  if (node === null) {
+    if (doc.children) {
+      for (const child of doc.children) {
+        const found = findNodeById(doc, id, child);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  
+  if (node.id === id) return node;
+  
+  if (node.children && Array.isArray(node.children)) {
+    for (const child of node.children) {
+      const found = findNodeById(null, id, child);
+      if (found) return found;
+    }
+  }
+  
+  return null;
+}
+
+// 渲染节点缩略图（简化版）
+function renderNodeThumbnail(ctx, node, x, y, width, height) {
+  if (!width || !height) return;
+  
+  const fillColor = resolveColor(node.fill);
+  const strokeColor = node.stroke ? resolveColor(node.stroke.fill) : null;
+  const cornerRadius = node.cornerRadius || 0;
+  
+  // 绘制填充
+  if (fillColor) {
+    ctx.fillStyle = fillColor;
+    if (cornerRadius > 0) {
+      drawRoundedRect(ctx, x, y, width, height, Math.min(cornerRadius, width/2, height/2));
+      ctx.fill();
+    } else {
+      ctx.fillRect(x, y, width, height);
+    }
+  }
+  
+  // 绘制边框
+  if (strokeColor) {
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 1;
+    if (cornerRadius > 0) {
+      drawRoundedRect(ctx, x, y, width, height, Math.min(cornerRadius, width/2, height/2));
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(x, y, width, height);
+    }
+  }
+  
+  // 渲染文本
+  if (node.type === 'text' && node.content) {
+    const textColor = resolveColor(node.fill) || '#333';
+    ctx.fillStyle = textColor;
+    ctx.font = `${Math.min(node.fontSize || 12, 14)}px -apple-system, sans-serif`;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.content.substring(0, 10), x + 4, y + height/2);
+  }
+  
+  // 递归渲染子元素
+  if (node.children && Array.isArray(node.children)) {
+    let childX = x + (node.padding || 0);
+    let childY = y + (node.padding || 0);
+    
+    node.children.forEach(child => {
+      const cw = typeof child.width === 'number' ? child.width : width - (node.padding || 0) * 2;
+      const ch = typeof child.height === 'number' ? child.height : 20;
+      
+      renderNodeThumbnail(ctx, child, childX + (child.x || 0), childY + (child.y || 0), cw, ch);
+      
+      if (node.layout === 'horizontal') {
+        childX += cw + (node.gap || 0);
+      } else if (node.layout === 'vertical') {
+        childY += ch + (node.gap || 0);
+      }
+    });
+  }
 }
 
 // 切换分类展开/收起
