@@ -16,15 +16,48 @@
       padding: 20px;
     }
     h1 { color: #fff; margin-bottom: 20px; }
+    .canvas-wrapper {
+      overflow: auto;
+      max-width: 90vw;
+      max-height: 70vh;
+    }
     #canvas-container {
       background: #0f0f1a;
       border-radius: 12px;
       padding: 20px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      display: inline-block;
     }
     canvas {
       background: #fff;
       border-radius: 8px;
+      display: block;
+    }
+    .controls {
+      align-items: center;
+    }
+    #zoomSlider {
+      width: 100px;
+    }
+    .drag-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(59, 130, 246, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .drag-overlay.active {
+      display: flex;
+    }
+    .drag-overlay p {
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
     }
     .controls {
       margin-top: 20px;
@@ -50,14 +83,19 @@
 </head>
 <body>
   <h1>.pen File Viewer</h1>
-  <div id="canvas-container">
-    <canvas id="canvas" width="375" height="812"></canvas>
+  <div class="canvas-wrapper">
+    <div id="canvas-container">
+      <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
   </div>
   <div class="controls">
     <button onclick="loadSample()">Load sample.pen</button>
     <button onclick="downloadCanvas()">Download PNG</button>
+    <label>Zoom: </label>
+    <input type="range" id="zoomSlider" min="25" max="200" value="100" onchange="setZoom(this.value)">
+    <span id="zoomValue">100%</span>
   </div>
-  <div class="info">Canvas: 375 x 812 (iPhone SE size)</div>
+  <div class="info">Canvas: 800 x 600 | Drag & drop a .pen file to view</div>
 
 <script>
 // ====== Pen Renderer ======
@@ -376,13 +414,41 @@ function renderDocument(doc) {
   console.log('Rendered', doc.children?.length || 0, 'root nodes');
 }
 
+// 缩放功能
+let currentZoom = 100;
+let penDocument = null;
+
+function setZoom(value) {
+  currentZoom = parseInt(value);
+  document.getElementById('zoomValue').textContent = currentZoom + '%';
+  const container = document.getElementById('canvas-container');
+  container.style.transform = `scale(${currentZoom / 100})`;
+  container.style.transformOrigin = 'top left';
+}
+
+// 加载并渲染文档
+function loadAndRender(doc) {
+  penDocument = doc;
+  
+  // 根据文档调整画布大小
+  if (doc.children && doc.children[0]) {
+    const root = doc.children[0];
+    const width = root.width || 800;
+    const height = root.height || 600;
+    canvas.width = typeof width === 'number' ? width : 800;
+    canvas.height = typeof height === 'number' ? height : 600;
+  }
+  
+  renderDocument(doc);
+}
+
 // 加载示例文件
 async function loadSample() {
   try {
     const response = await fetch('sample.pen');
     const text = await response.text();
     const doc = JSON.parse(text);
-    renderDocument(doc);
+    loadAndRender(doc);
   } catch (err) {
     console.error('Failed to load sample.pen:', err);
     alert('Failed to load sample.pen. Make sure the file exists.');
@@ -397,10 +463,61 @@ function downloadCanvas() {
   link.click();
 }
 
+// 拖放支持
+function setupDragDrop() {
+  const overlay = document.getElementById('drag-overlay');
+  
+  document.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    overlay.classList.add('active');
+  });
+  
+  overlay.addEventListener('dragleave', (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove('active');
+    }
+  });
+  
+  overlay.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+  
+  overlay.addEventListener('drop', (e) => {
+    e.preventDefault();
+    overlay.classList.remove('active');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.name.endsWith('.pen')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const doc = JSON.parse(event.target.result);
+            loadAndRender(doc);
+          } catch (err) {
+            alert('Invalid .pen file: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      } else {
+        alert('Please drop a .pen file');
+      }
+    }
+  });
+}
+
 // 初始化
 window.onload = () => {
+  setupDragDrop();
   loadSample();
 };
 </script>
+
+<!-- 拖放覆盖层 -->
+<div id="drag-overlay" class="drag-overlay">
+  <p>Drop .pen file here</p>
+</div>
+
 </body>
 </html>

@@ -5,13 +5,21 @@
       "type": "color",
       "value": "#3b82f6"
     },
+    "color.secondary": {
+      "type": "color",
+      "value": "#8b5cf6"
+    },
     "color.background": {
       "type": "color",
-      "value": "#ffffff"
+      "value": "#f8fafc"
     },
     "color.text": {
       "type": "color",
       "value": "#1f2937"
+    },
+    "color.muted": {
+      "type": "color",
+      "value": "#6b7280"
     },
     "spacing.base": {
       "type": "number",
@@ -25,203 +33,367 @@
       "name": "Main Container",
       "x": 0,
       "y": 0,
-      "width": 375,
-      "height": 812,
+      "width": 800,
+      "height": 600,
       "fill": "$color.background",
-      "layout": "vertical",
-      "justifyContent": "start",
-      "alignItems": "center",
-      "padding": 24,
-      "gap": 16,
+      "layout": "none",
       "children": [
         {
-          "id": "header",
+          "id": "sidebar",
           "type": "frame",
-          "name": "Header",
-          "width": "fill_container",
-          "height": 60,
-          "fill": "#f3f4f6",
-          "layout": "horizontal",
-          "justifyContent": "space_between",
-          "alignItems": "center",
-          "padding": [0, 16],
+          "name": "Sidebar",
+          "x": 0,
+          "y": 0,
+          "width": 200,
+          "height": 600,
+          "fill": "#1e293b",
+          "layout": "vertical",
+          "padding": 24,
+          "gap": 8,
           "children": [
             {
-              "id": "logo",
+              "id": "sidebar-logo",
               "type": "text",
               "content": "Pencil",
-              "fontSize": 20,
+              "fontSize": 24,
               "fontWeight": "700",
-              "fill": "$color.primary"
+              "fill": "#ffffff"
             },
             {
-              "id": "menu-btn",
+              "id": "sidebar-divider",
               "type": "frame",
-              "width": 40,
+              "width": "fill_container",
+              "height": 1,
+              "fill": "#334155",
+              "x": 0
+            },
+            {
+              "id": "nav-item-1",
+              "type": "frame",
+              "width": "fill_container",
               "height": 40,
-              "fill": "#e5e7eb",
-              "cornerRadius": 20
-            }
-          ]
-        },
-        {
-          "id": "hero-section",
-          "type": "frame",
-          "name": "Hero Section",
-          "width": "fill_container",
-          "height": 200,
-          "fill": "$color.primary",
-          "cornerRadius": 16,
-          "layout": "vertical",
-          "justifyContent": "center",
-          "alignItems": "center",
-          "gap": 12,
-          "children": [
-            {
-              "id": "hero-title",
-              "type": "text",
-              "content": "Welcome to Pencil",
-              "fontSize": 28,
-              "fontWeight": "700",
-              "fill": "#ffffff",
-              "textAlign": "center"
-            },
-            {
-              "id": "hero-subtitle",
-              "type": "text",
-              "content": "Design right where you code",
-              "fontSize": 16,
-              "fill": "#e0e7ff",
-              "textAlign": "center"
-            }
-          ]
-        },
-        {
-          "id": "card-1",
-          "type": "frame",
-          "name": "Feature Card",
-          "reusable": true,
-          "width": "fill_container",
-          "height": 120,
-          "fill": "#ffffff",
-          "stroke": {
-            "align": "inside",
-            "thickness": 1,
-            "fill": "#e5e7eb"
-          },
-          "effect": {
-            "type": "shadow",
-            "shadowType": "outer",
-            "offset": { "x": 0, "y": 4 },
-            "blur": 12,
-            "color": "#0000001a"
-          },
-          "cornerRadius": 12,
-          "layout": "horizontal",
-          "justifyContent": "start",
-          "alignItems": "center",
-          "padding": 16,
-          "gap": 16,
-          "children": [
-            {
-              "id": "card-icon",
-              "type": "frame",
-              "width": 48,
-              "height": 48,
-              "fill": "#dbeafe",
-              "cornerRadius": 12
-            },
-            {
-              "id": "card-content",
-              "type": "frame",
-              "layout": "vertical",
-              "justifyContent": "center",
-              "alignItems": "start",
-              "gap": 4,
+              "fill": "#3b82f6",
+              "cornerRadius": 8,
+              "layout": "horizontal",
+              "justifyContent": "start",
+              "alignItems": "center",
+              "padding": [0, 12],
               "children": [
                 {
-                  "id": "card-title",
+                  "id": "nav-icon-1",
                   "type": "text",
-                  "content": "Vector Design",
-                  "fontSize": 18,
-                  "fontWeight": "600",
-                  "fill": "$color.text"
+                  "content": "🏠",
+                  "fontSize": 16
                 },
                 {
-                  "id": "card-desc",
+                  "id": "nav-text-1",
                   "type": "text",
-                  "content": "Create beautiful designs with precision",
+                  "content": "Dashboard",
                   "fontSize": 14,
-                  "fill": "#6b7280"
+                  "fill": "#ffffff",
+                  "x": 12
+                }
+              ]
+            },
+            {
+              "id": "nav-item-2",
+              "type": "frame",
+              "width": "fill_container",
+              "height": 40,
+              "cornerRadius": 8,
+              "layout": "horizontal",
+              "justifyContent": "start",
+              "alignItems": "center",
+              "padding": [0, 12],
+              "children": [
+                {
+                  "id": "nav-icon-2",
+                  "type": "text",
+                  "content": "📁",
+                  "fontSize": 16
+                },
+                {
+                  "id": "nav-text-2",
+                  "type": "text",
+                  "content": "Projects",
+                  "fontSize": 14,
+                  "fill": "#94a3b8",
+                  "x": 12
+                }
+              ]
+            },
+            {
+              "id": "nav-item-3",
+              "type": "frame",
+              "width": "fill_container",
+              "height": 40,
+              "cornerRadius": 8,
+              "layout": "horizontal",
+              "justifyContent": "start",
+              "alignItems": "center",
+              "padding": [0, 12],
+              "children": [
+                {
+                  "id": "nav-icon-3",
+                  "type": "text",
+                  "content": "⚙️",
+                  "fontSize": 16
+                },
+                {
+                  "id": "nav-text-3",
+                  "type": "text",
+                  "content": "Settings",
+                  "fontSize": 14,
+                  "fill": "#94a3b8",
+                  "x": 12
                 }
               ]
             }
           ]
         },
         {
-          "id": "button-primary",
+          "id": "main-content",
           "type": "frame",
-          "name": "Primary Button",
-          "reusable": true,
-          "width": 200,
-          "height": 48,
-          "fill": "$color.primary",
-          "cornerRadius": 24,
-          "layout": "horizontal",
-          "justifyContent": "center",
-          "alignItems": "center",
+          "name": "Main Content",
+          "x": 200,
+          "y": 0,
+          "width": 600,
+          "height": 600,
+          "layout": "vertical",
+          "padding": 24,
+          "gap": 24,
           "children": [
             {
-              "id": "btn-text",
-              "type": "text",
-              "content": "Get Started",
-              "fontSize": 16,
-              "fontWeight": "600",
+              "id": "header-row",
+              "type": "frame",
+              "name": "Header",
+              "width": "fill_container",
+              "height": 48,
+              "layout": "horizontal",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "page-title",
+                  "type": "text",
+                  "content": "Welcome back, User!",
+                  "fontSize": 24,
+                  "fontWeight": "700",
+                  "fill": "$color.text"
+                },
+                {
+                  "id": "avatar",
+                  "type": "frame",
+                  "width": 48,
+                  "height": 48,
+                  "fill": "$color.primary",
+                  "cornerRadius": 24
+                }
+              ]
+            },
+            {
+              "id": "stats-row",
+              "type": "frame",
+              "name": "Stats Row",
+              "width": "fill_container",
+              "height": 100,
+              "layout": "horizontal",
+              "gap": 16,
+              "children": [
+                {
+                  "id": "stat-1",
+                  "type": "frame",
+                  "name": "Stat Card 1",
+                  "reusable": true,
+                  "width": "fill_container",
+                  "height": 100,
+                  "fill": "#ffffff",
+                  "stroke": { "align": "inside", "thickness": 1, "fill": "#e2e8f0" },
+                  "effect": { "type": "shadow", "shadowType": "outer", "offset": { "x": 0, "y": 2 }, "blur": 8, "color": "#0000000d" },
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "padding": 16,
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "stat-label-1",
+                      "type": "text",
+                      "content": "Total Views",
+                      "fontSize": 12,
+                      "fill": "$color.muted"
+                    },
+                    {
+                      "id": "stat-value-1",
+                      "type": "text",
+                      "content": "24,892",
+                      "fontSize": 28,
+                      "fontWeight": "700",
+                      "fill": "$color.text"
+                    }
+                  ]
+                },
+                {
+                  "id": "stat-2",
+                  "type": "frame",
+                  "width": "fill_container",
+                  "height": 100,
+                  "fill": "#ffffff",
+                  "stroke": { "align": "inside", "thickness": 1, "fill": "#e2e8f0" },
+                  "effect": { "type": "shadow", "shadowType": "outer", "offset": { "x": 0, "y": 2 }, "blur": 8, "color": "#0000000d" },
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "padding": 16,
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "stat-label-2",
+                      "type": "text",
+                      "content": "Revenue",
+                      "fontSize": 12,
+                      "fill": "$color.muted"
+                    },
+                    {
+                      "id": "stat-value-2",
+                      "type": "text",
+                      "content": "$12,340",
+                      "fontSize": 28,
+                      "fontWeight": "700",
+                      "fill": "#22c55e"
+                    }
+                  ]
+                },
+                {
+                  "id": "stat-3",
+                  "type": "frame",
+                  "width": "fill_container",
+                  "height": 100,
+                  "fill": "#ffffff",
+                  "stroke": { "align": "inside", "thickness": 1, "fill": "#e2e8f0" },
+                  "effect": { "type": "shadow", "shadowType": "outer", "offset": { "x": 0, "y": 2 }, "blur": 8, "color": "#0000000d" },
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "padding": 16,
+                  "gap": 4,
+                  "children": [
+                    {
+                      "id": "stat-label-3",
+                      "type": "text",
+                      "content": "Active Users",
+                      "fontSize": 12,
+                      "fill": "$color.muted"
+                    },
+                    {
+                      "id": "stat-value-3",
+                      "type": "text",
+                      "content": "1,429",
+                      "fontSize": 28,
+                      "fontWeight": "700",
+                      "fill": "$color.primary"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "chart-area",
+              "type": "frame",
+              "name": "Chart Area",
+              "width": "fill_container",
+              "height": 200,
               "fill": "#ffffff",
-              "textAlign": "center"
-            }
-          ]
-        },
-        {
-          "id": "shapes-demo",
-          "type": "frame",
-          "name": "Shapes Demo",
-          "width": "fill_container",
-          "height": 100,
-          "layout": "horizontal",
-          "justifyContent": "space_between",
-          "alignItems": "center",
-          "children": [
-            {
-              "id": "rect-1",
-              "type": "rectangle",
-              "width": 60,
-              "height": 60,
-              "fill": "#ef4444",
-              "cornerRadius": 8
+              "stroke": { "align": "inside", "thickness": 1, "fill": "#e2e8f0" },
+              "effect": { "type": "shadow", "shadowType": "outer", "offset": { "x": 0, "y": 2 }, "blur": 8, "color": "#0000000d" },
+              "cornerRadius": 12,
+              "layout": "vertical",
+              "padding": 16,
+              "gap": 12,
+              "children": [
+                {
+                  "id": "chart-title",
+                  "type": "text",
+                  "content": "Monthly Revenue",
+                  "fontSize": 16,
+                  "fontWeight": "600",
+                  "fill": "$color.text"
+                },
+                {
+                  "id": "chart-bars",
+                  "type": "frame",
+                  "width": "fill_container",
+                  "height": 120,
+                  "layout": "horizontal",
+                  "justifyContent": "space_between",
+                  "alignItems": "end",
+                  "padding": [0, 20],
+                  "children": [
+                    { "id": "bar-1", "type": "frame", "width": 30, "height": 60, "fill": "#bfdbfe", "cornerRadius": 4 },
+                    { "id": "bar-2", "type": "frame", "width": 30, "height": 80, "fill": "#bfdbfe", "cornerRadius": 4 },
+                    { "id": "bar-3", "type": "frame", "width": 30, "height": 50, "fill": "#bfdbfe", "cornerRadius": 4 },
+                    { "id": "bar-4", "type": "frame", "width": 30, "height": 90, "fill": "#bfdbfe", "cornerRadius": 4 },
+                    { "id": "bar-5", "type": "frame", "width": 30, "height": 70, "fill": "#bfdbfe", "cornerRadius": 4 },
+                    { "id": "bar-6", "type": "frame", "width": 30, "height": 100, "fill": "$color.primary", "cornerRadius": 4 },
+                    { "id": "bar-7", "type": "frame", "width": 30, "height": 85, "fill": "#bfdbfe", "cornerRadius": 4 }
+                  ]
+                }
+              ]
             },
             {
-              "id": "ellipse-1",
-              "type": "ellipse",
-              "width": 60,
-              "height": 60,
-              "fill": "#22c55e"
-            },
-            {
-              "id": "rect-2",
-              "type": "rectangle",
-              "width": 60,
-              "height": 60,
-              "fill": {
-                "type": "gradient",
-                "gradientType": "linear",
-                "rotation": 45,
-                "colors": [
-                  { "color": "#8b5cf6", "position": 0 },
-                  { "color": "#ec4899", "position": 1 }
-                ]
-              },
-              "cornerRadius": 30
+              "id": "button-row",
+              "type": "frame",
+              "name": "Button Row",
+              "width": "fill_container",
+              "height": 48,
+              "layout": "horizontal",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "btn-primary",
+                  "type": "frame",
+                  "name": "Primary Button",
+                  "reusable": true,
+                  "width": 120,
+                  "height": 48,
+                  "fill": "$color.primary",
+                  "cornerRadius": 8,
+                  "layout": "horizontal",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "btn-text",
+                      "type": "text",
+                      "content": "Create New",
+                      "fontSize": 14,
+                      "fontWeight": "600",
+                      "fill": "#ffffff"
+                    }
+                  ]
+                },
+                {
+                  "id": "btn-secondary",
+                  "type": "frame",
+                  "width": 120,
+                  "height": 48,
+                  "stroke": { "align": "inside", "thickness": 1, "fill": "#d1d5db" },
+                  "cornerRadius": 8,
+                  "layout": "horizontal",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "btn-text-2",
+                      "type": "text",
+                      "content": "Learn More",
+                      "fontSize": 14,
+                      "fontWeight": "600",
+                      "fill": "$color.text"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
