@@ -252,6 +252,10 @@
       <button class="secondary" onclick="downloadCanvas()">⬇ PNG</button>
     </div>
     
+    <div class="panel-row">
+      <button id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
+    </div>
+    
     <div class="zoom-control">
       <span>Zoom:</span>
       <input type="range" id="zoomSlider" min="25" max="400" value="100" onchange="setZoom(this.value)">
@@ -288,6 +292,8 @@ const ctx = canvas.getContext('2d');
 
 // 变量存储
 let variables = {};
+let rawVariables = {};  // 原始变量定义（含主题信息）
+let currentTheme = { Mode: 'Light', Base: 'Neutral', Accent: 'Default' };
 let currentZoom = 100;
 let penDocument = null;
 
@@ -466,31 +472,74 @@ function resizeCanvas() {
 // 解析变量
 function resolveVariables(doc) {
   variables = {};
+  rawVariables = {};
   
-  // 从文档变量定义
-  if (doc.variables) {
-    for (const [key, val] of Object.entries(doc.variables)) {
-      variables[key] = typeof val === 'object' && val.value !== undefined ? val.value : val;
-    }
+  // 从文档获取根节点的主题设置
+  if (doc.children && doc.children[0] && doc.children[0].theme) {
+    currentTheme = { ...currentTheme, ...doc.children[0].theme };
   }
   
-  // 默认变量值（用于 pencil-new.pen 等无变量定义的文件）
-  const defaults = {
-    '--bg-page': '#ffffff',
-    '--bg-card': '#ffffff',
-    '--border': '#e5e7eb',
-    '--black-primary': '#1f2937',
-    '--black-secondary': '#4b5563',
-    '--red-primary': '#ef4444',
-    '--text-primary': '#1f2937',
-    '--text-secondary': '#6b7280',
-    '--text-muted': '#9ca3af'
-  };
+  // 保存原始变量定义
+  if (doc.variables) {
+    rawVariables = doc.variables;
+  }
   
-  for (const [key, val] of Object.entries(defaults)) {
-    if (variables[key] === undefined) {
-      variables[key] = val;
+  // 解析每个变量，根据主题选择值
+  for (const [key, varDef] of Object.entries(rawVariables)) {
+    if (!varDef || !varDef.value) {
+      variables[key] = null;
+      continue;
     }
+    
+    // value 可能是数组（多主题）或单个值
+    const values = Array.isArray(varDef.value) ? varDef.value : [{ value: varDef.value }];
+    
+    // 找到匹配当前主题的值
+    let matchedValue = null;
+    let defaultFallback = null;
+    
+    for (const item of values) {
+      const itemValue = item.value;
+      const itemTheme = item.theme;
+      
+      // 记录默认值（无主题条件的第一个）
+      if (!itemTheme && !defaultFallback) {
+        defaultFallback = itemValue;
+      }
+      
+      // 检查主题匹配
+      if (itemTheme) {
+        let matches = true;
+        for (const [themeKey, themeVal] of Object.entries(itemTheme)) {
+          if (currentTheme[themeKey] !== themeVal) {
+            matches = false;
+            break;
+          }
+        }
+        if (matches) {
+          matchedValue = itemValue;
+          break;  // 找到匹配，停止
+        }
+      }
+    }
+    
+    // 使用匹配值或默认值
+    variables[key] = matchedValue || defaultFallback;
+  }
+  
+  console.log('Theme:', currentTheme, 'Variables loaded:', Object.keys(variables).length);
+}
+
+// 切换主题
+function toggleTheme() {
+  currentTheme.Mode = currentTheme.Mode === 'Light' ? 'Dark' : 'Light';
+  resolveVariables(penDocument);
+  renderDocument(penDocument);
+  
+  // 更新按钮文字
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.textContent = currentTheme.Mode === 'Light' ? '🌙 Dark' : '☀️ Light';
   }
 }
 
