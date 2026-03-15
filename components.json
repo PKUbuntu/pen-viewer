@@ -1,0 +1,293 @@
+{
+  "version": "1.0",
+  "source": "pencil-new.pen",
+  "shadcnVersion": "latest",
+  "components": {
+    "Sidebar": {
+      "id": "PV1ln",
+      "shadcn": "Sidebar",
+      "category": "Navigation",
+      "description": "侧边栏组件，包含 Header, Content, Footer",
+      "variants": ["Sidebar Header", "Sidebar Content", "Sidebar Footer", "Sidebar Item/Active", "Sidebar Item/Default", "Sidebar Section Title"]
+    },
+    "Button": {
+      "shadcn": "Button",
+      "category": "Form",
+      "description": "按钮组件",
+      "variants": {
+        "Default": { "id": "VSnC2", "large": "C3KOZ" },
+        "Secondary": { "id": "e8v1X", "large": "gou6u" },
+        "Destructive": { "id": "YKnjc", "large": "xPENL" },
+        "Outline": { "id": "C10zH", "large": "ghKmL" },
+        "Ghost": { "id": "3f2VW", "large": "l7zpS" }
+      }
+    },
+    "IconButton": {
+      "shadcn": "Button (icon only)",
+      "category": "Form",
+      "description": "图标按钮",
+      "variants": {
+        "Default": { "id": "urnwK", "large": "ZIV1t" },
+        "Secondary": { "id": "PbuYK", "large": "AWqtD" },
+        "Destructive": { "id": "EsgLk", "large": "ilXCy" },
+        "Outline": { "id": "hXOUF", "large": "EXRaV" },
+        "Ghost": { "id": "WReIy" }
+      }
+    },
+    "Avatar": {
+      "shadcn": "Avatar",
+      "category": "Data Display",
+      "description": "用户头像",
+      "variants": {
+        "Image": { "id": "HWTb9" },
+        "Text": { "id": "DpPVg" }
+      }
+    },
+    "Badge": {
+      "shadcn": "Badge",
+      "category": "Data Display",
+      "description": "标签徽章",
+      "variants": {
+        "Default": { "id": "UjXug" },
+        "Secondary": { "id": "WuUMk" },
+        "Destructive": { "id": "YvyLD" },
+        "Outline": { "id": "3IiAS" }
+      }
+    },
+    "Accordion": {
+      "shadcn": "Accordion",
+      "category": "Disclosure",
+      "description": "手风琴折叠面板",
+      "variants": {
+        "Open": { "id": "pfIN1" }
+      },
+      "parts": ["Accordion Trigger", "Accordion Content"]
+    },
+    "Alert": {
+      "shadcn": "Alert",
+      "category": "Feedback",
+      "description": "警告提示",
+      "variants": {
+        "Default": { "id": "QyzNg" }
+      },
+      "parts": ["Alert Title", "Alert Description", "Icon Container"]
+    },
+    "Textarea": {
+      "shadcn": "Textarea",
+      "category": "Form",
+      "description": "多行文本输入",
+      "variants": {
+        "Default": { "id": "BjRan" },
+        "Filled": { "id": "CrS3L" }
+      }
+    },
+    "InputOTP": {
+      "shadcn": "Input OTP",
+      "category": "Form",
+      "description": "OTP 验证码输入",
+      "variants": {
+        "Default": { "id": "02npo" },
+        "Filled": { "id": "rxp3e" }
+      },
+      "parts": ["Input OTP", "Input OTP Container", "Input OTP Divider"]
+    },
+    "Select": {
+      "shadcn": "Select",
+      "category": "Form",
+      "description": "下拉选择框",
+      "variants": {
+        "Default": { "id": "w5c1O" },
+        "Filled": { "id": "A4VOm" }
+      },
+      "parts": ["Select Trigger", "Select option"]
+    },
+    "Input": {
+      "shadcn": "Input",
+      "category": "Form",
+      "description": "文本输入框",
+      "variants": {
+        "Default": { "id": "fEUdI" },
+        "Filled": { "id": "AfQIN" }
+      }
+    },
+    "InputGroup": {
+      "shadcn": "Input Group",
+      "category": "Form",
+      "description": "输入框组（带标签）",
+      "variants": {
+        "Default": { "id": "1415a" },
+        "Filled": { "id": "uHFal" }
+      }
+    },
+    "Tooltip": {
+      "shadcn": "Tooltip",
+      "category": "Overlay",
+      "description": "工具提示",
+      "variants": {
+        "Default": { "id": "lxrnE" }
+      }
+    },
+    "Switch": {
+      "shadcn": "Switch",
+      "category": "Form",
+      "description": "开关",
+      "variants": {
+        "Checked": { "id": "c8fiq" },
+        "Unchecked": { "id": "fcMl6" }
+      }
+    },
+    "Radio": {
+      "shadcn": "Radio Group",
+      "category": "Form",
+      "description": "单选框",
+      "variants": {
+        "Selected": { "id": "LbK20" },
+        "Unselected": { "id": "D9Y8K" }
+      }
+    },
+    "Checkbox": {
+      "shadcn": "Checkbox",
+      "category": "Form",
+      "description": "复选框",
+      "variants": {
+        "Checked": { "id": "ovuDP" }
+      }
+    },
+    "Progress": {
+      "shadcn": "Progress",
+      "category": "Feedback",
+      "description": "进度条",
+      "variants": {
+        "Default": { "id": "hahxH" }
+      }
+    },
+    "Breadcrumb": {
+      "shadcn": "Breadcrumb",
+      "category": "Navigation",
+      "description": "面包屑导航",
+      "parts": {
+        "Item/Default": { "id": "KUk4t" },
+        "Item/Current": { "id": "FBqua" },
+        "Item/Ellipsis": { "id": "ctKFD" },
+        "Item/Separator": { "id": "3s95S" }
+      }
+    },
+    "Card": {
+      "shadcn": "Card",
+      "category": "Data Display",
+      "description": "卡片容器",
+      "variants": {
+        "Default": { "id": "pcGlv" },
+        "Plain": { "id": "fpgbn" },
+        "Image": { "id": "JENPq" },
+        "Action": { "id": "PiMGI" }
+      },
+      "parts": ["Card Header", "Card Content", "Card Actions", "Card Image"]
+    },
+    "Tabs": {
+      "shadcn": "Tabs",
+      "category": "Disclosure",
+      "description": "标签页",
+      "variants": {
+        "Default": { "id": "PbofX" }
+      },
+      "parts": {
+        "Item/Active": { "id": "coMmv" },
+        "Item/Inactive": { "id": "QY0Ka" }
+      }
+    },
+    "Dialog": {
+      "shadcn": "Dialog",
+      "category": "Overlay",
+      "description": "对话框",
+      "variants": {
+        "Default": { "id": "OtykB" }
+      }
+    },
+    "Dropdown": {
+      "shadcn": "Dropdown Menu",
+      "category": "Overlay",
+      "description": "下拉菜单",
+      "variants": {
+        "Default": { "id": "cTN8T" }
+      }
+    },
+    "List": {
+      "shadcn": "Item (custom)",
+      "category": "Data Display",
+      "description": "列表组件",
+      "parts": {
+        "Divider": { "id": "D24KC" },
+        "Title": { "id": "j3KBf" },
+        "Item/Checked": { "id": "2JGXl" },
+        "Item/Unchecked": { "id": "qamCY" },
+        "Search Box/Default": { "id": "O0rdg" },
+        "Search Box/Filled": { "id": "I9z29" }
+      }
+    },
+    "Combobox": {
+      "shadcn": "Combobox",
+      "category": "Form",
+      "description": "组合框",
+      "variants": {
+        "Default": { "id": "cCfrk" }
+      }
+    },
+    "Modal": {
+      "shadcn": "Dialog (custom modal)",
+      "category": "Overlay",
+      "description": "模态框变体",
+      "variants": {
+        "Left": { "id": "oVUJY" },
+        "Center": { "id": "X6bmd" },
+        "Icon": { "id": "TfbzN" }
+      }
+    },
+    "Pagination": {
+      "shadcn": "Pagination",
+      "category": "Navigation",
+      "description": "分页组件",
+      "variants": {
+        "Default": { "id": "U5noB" }
+      },
+      "parts": {
+        "Item/Active": { "id": "tjjQe" },
+        "Item/Default": { "id": "vbQN4" },
+        "Item/Ellipsis": { "id": "MqebB" }
+      }
+    },
+    "Table": {
+      "shadcn": "Table",
+      "category": "Data Display",
+      "description": "表格",
+      "variants": {
+        "Default": { "id": "bG7YL" }
+      },
+      "parts": {
+        "Row": { "id": "LoAux" },
+        "Cell": { "id": "FulCp" },
+        "Column Header": { "id": "w3NML" }
+      }
+    },
+    "DataTable": {
+      "shadcn": "Data Table",
+      "category": "Data Display",
+      "description": "数据表格（带状态）",
+      "variants": {
+        "Default": { "id": "shadcnDataTable" }
+      },
+      "parts": {
+        "Header": { "id": "KOEkG" },
+        "Footer": { "id": "RXiR9" }
+      }
+    }
+  },
+  "categories": {
+    "Form": ["Button", "IconButton", "Input", "InputGroup", "Select", "Textarea", "Checkbox", "Radio", "Switch", "Combobox", "InputOTP"],
+    "Data Display": ["Avatar", "Badge", "Card", "Table", "DataTable"],
+    "Disclosure": ["Accordion", "Tabs"],
+    "Feedback": ["Alert", "Progress"],
+    "Navigation": ["Sidebar", "Breadcrumb", "Pagination"],
+    "Overlay": ["Dialog", "Dropdown", "Modal", "Tooltip"]
+  }
+}

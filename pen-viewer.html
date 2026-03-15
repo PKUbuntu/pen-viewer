@@ -174,24 +174,60 @@
     .components-list {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 8px;
+    }
+    
+    .component-category {
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 8px;
+    }
+    
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 4px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .category-header:hover {
+      color: #3b82f6;
+    }
+    
+    .category-header .count {
+      font-size: 11px;
+      color: #64748b;
+      background: rgba(255,255,255,0.1);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    
+    .category-items {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-left: 4px;
     }
     
     .component-item {
-      padding: 8px 12px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 6px;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 4px;
       cursor: pointer;
       color: #94a3b8;
       font-size: 12px;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
     
     .component-item:hover {
-      background: rgba(59, 130, 246, 0.2);
+      background: rgba(59, 130, 246, 0.15);
       color: #fff;
     }
     
@@ -200,17 +236,18 @@
       color: #fff;
     }
     
-    .component-item .type {
+    .component-item .comp-name {
+      font-weight: 500;
+    }
+    
+    .component-item .comp-variant {
       font-size: 10px;
-      padding: 2px 6px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 4px;
+      color: #64748b;
       margin-left: auto;
     }
     
-    .component-item.reusable .type {
-      background: rgba(34, 197, 94, 0.2);
-      color: #22c55e;
+    .component-item.active .comp-variant {
+      color: #93c5fd;
     }
     
     .no-components {
@@ -348,49 +385,88 @@ function buildComponentsList() {
   const listEl = document.getElementById('componentsList');
   const countEl = document.getElementById('componentCount');
   
-  countEl.textContent = `(${components.length})`;
+  // 只显示可复用组件
+  const reusableComponents = components.filter(c => c.reusable);
+  countEl.textContent = `(${reusableComponents.length})`;
   
-  if (components.length === 0) {
-    listEl.innerHTML = '<div class="no-components">No named components found</div>';
+  if (reusableComponents.length === 0) {
+    listEl.innerHTML = '<div class="no-components">No reusable components found</div>';
     return;
   }
   
-  // 按类型分组
-  const grouped = {};
-  components.forEach(comp => {
-    const key = comp.reusable ? 'reusable' : comp.type;
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(comp);
+  // 按 shadcn 分类
+  const categories = {
+    'Form': { icon: '📝', items: [] },
+    'Data Display': { icon: '📊', items: [] },
+    'Disclosure': { icon: '📂', items: [] },
+    'Feedback': { icon: '💬', items: [] },
+    'Navigation': { icon: '🧭', items: [] },
+    'Overlay': { icon: '🔲', items: [] },
+    'Other': { icon: '📦', items: [] }
+  };
+  
+  // 组件名到分类的映射
+  const componentCategory = {
+    'Button': 'Form', 'Icon Button': 'Form', 'Input': 'Form', 'Input Group': 'Form',
+    'Select': 'Form', 'Textarea': 'Form', 'Checkbox': 'Form', 'Radio': 'Form',
+    'Switch': 'Form', 'Combobox': 'Form', 'Input OTP': 'Form', 'Input OTP Group': 'Form',
+    'Avatar': 'Data Display', 'Badge': 'Data Display', 'Card': 'Data Display',
+    'Table': 'Data Display', 'Data Table': 'Data Display',
+    'Accordion': 'Disclosure', 'Tabs': 'Disclosure',
+    'Alert': 'Feedback', 'Progress': 'Feedback',
+    'Sidebar': 'Navigation', 'Breadcrumb': 'Navigation', 'Pagination': 'Navigation',
+    'Dialog': 'Overlay', 'Dropdown': 'Overlay', 'Modal': 'Overlay', 'Tooltip': 'Overlay',
+    'List': 'Data Display'
+  };
+  
+  // 分类组件
+  reusableComponents.forEach(comp => {
+    // 提取组件类型名（去掉变体后缀）
+    const baseName = comp.name.split('/')[0];
+    const category = componentCategory[baseName] || 'Other';
+    categories[category].items.push(comp);
   });
   
+  // 构建HTML
   let html = '';
+  const categoryOrder = ['Form', 'Data Display', 'Disclosure', 'Feedback', 'Navigation', 'Overlay', 'Other'];
   
-  // 可复用组件优先
-  if (grouped.reusable) {
-    grouped.reusable.forEach(comp => {
-      html += `<div class="component-item reusable ${activeComponentId === comp.id ? 'active' : ''}" 
-                    onclick="focusComponent('${comp.id}')">
-        <span>🔧 ${comp.name}</span>
-        <span class="type">reusable</span>
+  categoryOrder.forEach(cat => {
+    const items = categories[cat].items;
+    if (items.length === 0) return;
+    
+    html += `<div class="component-category">
+      <div class="category-header" onclick="toggleCategory('${cat}')">
+        <span>${categories[cat].icon} ${cat}</span>
+        <span class="count">${items.length}</span>
+      </div>
+      <div class="category-items" id="cat-${cat}">`;
+    
+    items.forEach(comp => {
+      // 解析变体名
+      const parts = comp.name.split('/');
+      const baseName = parts[0];
+      const variant = parts.length > 1 ? parts.slice(1).join('/') : '';
+      
+      html += `<div class="component-item ${activeComponentId === comp.id ? 'active' : ''}" 
+                    onclick="focusComponent('${comp.id}')" title="${comp.name}">
+        <span class="comp-name">${baseName}</span>
+        ${variant ? `<span class="comp-variant">${variant}</span>` : ''}
       </div>`;
     });
-  }
-  
-  // 其他类型
-  ['frame', 'rectangle', 'ellipse', 'text'].forEach(type => {
-    if (grouped[type]) {
-      grouped[type].forEach(comp => {
-        const icon = type === 'frame' ? '📦' : type === 'text' ? '📝' : type === 'ellipse' ? '⭕' : '⬜';
-        html += `<div class="component-item ${activeComponentId === comp.id ? 'active' : ''}" 
-                      onclick="focusComponent('${comp.id}')">
-          <span>${icon} ${comp.name}</span>
-          <span class="type">${type}</span>
-        </div>`;
-      });
-    }
+    
+    html += '</div></div>';
   });
   
   listEl.innerHTML = html;
+}
+
+// 切换分类展开/收起
+function toggleCategory(cat) {
+  const el = document.getElementById('cat-' + cat);
+  if (el) {
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
 }
 
 // 定位到组件
