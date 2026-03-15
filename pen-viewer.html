@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>.pen Viewer</title>
-  <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -16,34 +14,13 @@
         extend: {
           colors: {
             border: "hsl(var(--border))",
-            input: "hsl(var(--input))",
-            ring: "hsl(var(--ring))",
             background: "hsl(var(--background))",
             foreground: "hsl(var(--foreground))",
-            primary: {
-              DEFAULT: "hsl(var(--primary))",
-              foreground: "hsl(var(--primary-foreground))",
-            },
-            secondary: {
-              DEFAULT: "hsl(var(--secondary))",
-              foreground: "hsl(var(--secondary-foreground))",
-            },
-            destructive: {
-              DEFAULT: "hsl(var(--destructive))",
-              foreground: "hsl(var(--destructive-foreground))",
-            },
-            muted: {
-              DEFAULT: "hsl(var(--muted))",
-              foreground: "hsl(var(--muted-foreground))",
-            },
-            accent: {
-              DEFAULT: "hsl(var(--accent))",
-              foreground: "hsl(var(--accent-foreground))",
-            },
-            card: {
-              DEFAULT: "hsl(var(--card))",
-              foreground: "hsl(var(--card-foreground))",
-            },
+            primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
+            secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
+            muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
+            accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
+            destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
           },
         },
       },
@@ -53,8 +30,6 @@
     :root {
       --background: 0 0% 100%;
       --foreground: 240 10% 3.9%;
-      --card: 0 0% 100%;
-      --card-foreground: 240 10% 3.9%;
       --primary: 240 5.9% 10%;
       --primary-foreground: 0 0% 98%;
       --secondary: 240 4.8% 95.9%;
@@ -66,14 +41,10 @@
       --destructive: 0 84.2% 60.2%;
       --destructive-foreground: 0 0% 98%;
       --border: 240 5.9% 90%;
-      --input: 240 5.9% 90%;
-      --ring: 240 5.9% 10%;
     }
     .dark {
       --background: 240 10% 3.9%;
       --foreground: 0 0% 98%;
-      --card: 240 10% 3.9%;
-      --card-foreground: 0 0% 98%;
       --primary: 0 0% 98%;
       --primary-foreground: 240 5.9% 10%;
       --secondary: 240 3.7% 15.9%;
@@ -85,28 +56,31 @@
       --destructive: 0 62.8% 30.6%;
       --destructive-foreground: 0 0% 98%;
       --border: 240 3.7% 15.9%;
-      --input: 240 3.7% 15.9%;
-      --ring: 240 4.9% 83.9%;
     }
-    
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f172a;
-    }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; }
     
-    #canvas {
+    #canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: block; }
+    
+    /* shadcn 组件叠加层 */
+    #component-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      display: block;
+      pointer-events: none;
+      z-index: 50;
+    }
+    
+    .overlay-component {
+      position: absolute;
+      pointer-events: auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      overflow: hidden;
     }
     
     .control-panel {
@@ -147,11 +121,7 @@
       font-weight: bold;
     }
     
-    .panel-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .panel-row { display: flex; align-items: center; gap: 10px; }
     
     button {
       padding: 8px 16px;
@@ -164,33 +134,19 @@
       transition: background 0.2s;
     }
     button:hover { background: #2563eb; }
-    button.secondary {
-      background: rgba(255,255,255,0.1);
-    }
+    button.secondary { background: rgba(255,255,255,0.1); }
     button.secondary:hover { background: rgba(255,255,255,0.2); }
     
-    .zoom-control {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #94a3b8;
-      font-size: 13px;
-    }
-    
+    .zoom-control { display: flex; align-items: center; gap: 8px; color: #94a3b8; font-size: 13px; }
     #zoomSlider { width: 80px; cursor: pointer; }
     
-    .info {
-      color: #64748b;
-      font-size: 11px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding-top: 12px;
-    }
+    .info { color: #64748b; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; }
     
     .components-panel {
       position: fixed;
       top: 16px;
       right: 16px;
-      width: 320px;
+      width: 260px;
       max-height: 80vh;
       background: rgba(15, 23, 42, 0.95);
       backdrop-filter: blur(12px);
@@ -212,215 +168,40 @@
       justify-content: space-between;
     }
     
-    .category-section {
-      margin-bottom: 16px;
-    }
+    .category-section { margin-bottom: 12px; }
     
     .category-title {
       color: #94a3b8;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       padding-bottom: 4px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .component-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-    
-    .component-preview {
-      background: #fff;
-      border-radius: 8px;
-      padding: 12px;
-      min-height: 60px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 2px solid transparent;
+      justify-content: space-between;
     }
     
-    .component-preview:hover {
-      border-color: #3b82f6;
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-    }
+    .component-list { display: flex; flex-direction: column; gap: 2px; }
     
-    .component-preview.active {
-      border-color: #3b82f6;
-      box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4);
-    }
-    
-    .component-preview.dark {
-      background: #1e293b;
-    }
-    
-    .component-label {
-      font-size: 10px;
-      color: #64748b;
-      text-align: center;
-      margin-top: 4px;
-    }
-    
-    /* shadcn-style components for preview */
-    .preview-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 6px 12px;
-      height: 28px;
-      cursor: pointer;
-    }
-    .preview-btn-primary {
-      background: #18181b;
-      color: #fff;
-    }
-    .preview-btn-secondary {
-      background: #f4f4f5;
-      color: #18181b;
-    }
-    .preview-btn-destructive {
-      background: #ef4444;
-      color: #fff;
-    }
-    .preview-btn-outline {
-      border: 1px solid #e4e4e7;
-      background: transparent;
-    }
-    .preview-btn-ghost {
-      background: transparent;
-    }
-    
-    .preview-badge {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 9999px;
-      padding: 2px 10px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-    .preview-badge-default { background: #18181b; color: #fff; }
-    .preview-badge-secondary { background: #f4f4f5; color: #18181b; }
-    .preview-badge-destructive { background: #ef4444; color: #fff; }
-    .preview-badge-outline { border: 1px solid #e4e4e7; }
-    
-    .preview-input {
-      width: 100%;
+    .component-item {
       padding: 6px 10px;
-      border: 1px solid #e4e4e7;
-      border-radius: 6px;
-      font-size: 12px;
-      outline: none;
-    }
-    .preview-input:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-    
-    .preview-checkbox {
-      width: 16px;
-      height: 16px;
-      border: 1px solid #e4e4e7;
+      background: rgba(255,255,255,0.03);
       border-radius: 4px;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 12px;
+      transition: all 0.15s;
       display: flex;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-    .preview-checkbox.checked {
-      background: #3b82f6;
-      border-color: #3b82f6;
-      color: #fff;
+      justify-content: space-between;
     }
     
-    .preview-switch {
-      width: 36px;
-      height: 20px;
-      background: #e4e4e7;
-      border-radius: 9999px;
-      position: relative;
-      cursor: pointer;
-    }
-    .preview-switch.checked {
-      background: #3b82f6;
-    }
-    .preview-switch::after {
-      content: '';
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background: #fff;
-      border-radius: 50%;
-      top: 2px;
-      left: 2px;
-      transition: transform 0.2s;
-    }
-    .preview-switch.checked::after {
-      transform: translateX(16px);
-    }
+    .component-item:hover { background: rgba(59, 130, 246, 0.15); color: #fff; }
+    .component-item.active { background: rgba(59, 130, 246, 0.3); color: #fff; }
     
-    .preview-card {
-      border: 1px solid #e4e4e7;
-      border-radius: 8px;
-      padding: 8px;
-      width: 100%;
-    }
-    
-    .preview-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #f4f4f5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: #64748b;
-    }
-    
-    .preview-progress {
-      width: 100%;
-      height: 8px;
-      background: #f4f4f5;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .preview-progress-bar {
-      height: 100%;
-      background: #3b82f6;
-      width: 60%;
-    }
-    
-    .preview-alert {
-      display: flex;
-      gap: 8px;
-      padding: 12px;
-      border-radius: 6px;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-    }
-    
-    .preview-tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 1px solid #e4e4e7;
-    }
-    .preview-tab {
-      padding: 6px 12px;
-      font-size: 12px;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-    }
-    .preview-tab.active {
-      border-bottom-color: #3b82f6;
-      color: #3b82f6;
-    }
+    .component-item .comp-name { font-weight: 500; }
+    .component-item .comp-variant { font-size: 10px; color: #64748b; }
+    .component-item.active .comp-variant { color: #93c5fd; }
     
     .toggle-components {
       position: fixed;
@@ -431,10 +212,238 @@
     }
     .components-hidden .components-panel { display: none; }
     .components-hidden .toggle-components { display: block; }
+    
+    /* shadcn 风格组件 */
+    .shadcn-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 16px;
+      height: 40px;
+      cursor: pointer;
+      border: none;
+      white-space: nowrap;
+    }
+    .shadcn-btn-primary { background: #18181b; color: #fff; }
+    .shadcn-btn-secondary { background: #f4f4f5; color: #18181b; }
+    .shadcn-btn-destructive { background: #ef4444; color: #fff; }
+    .shadcn-btn-outline { background: transparent; border: 1px solid #e4e4e7; color: #18181b; }
+    .shadcn-btn-ghost { background: transparent; color: #18181b; }
+    .shadcn-btn-link { background: transparent; color: #18181b; text-decoration: underline; }
+    
+    .shadcn-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .shadcn-badge-default { background: #18181b; color: #fff; }
+    .shadcn-badge-secondary { background: #f4f4f5; color: #18181b; }
+    .shadcn-badge-destructive { background: #ef4444; color: #fff; }
+    .shadcn-badge-outline { background: transparent; border: 1px solid #e4e4e7; }
+    
+    .shadcn-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e4e4e7;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+    .shadcn-input:focus { border-color: #18181b; ring: 2px solid rgba(24,24,27,0.2); }
+    
+    .shadcn-checkbox {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #e4e4e7;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: #fff;
+    }
+    .shadcn-checkbox.checked { background: #18181b; border-color: #18181b; color: #fff; }
+    
+    .shadcn-switch {
+      width: 44px;
+      height: 24px;
+      background: #e4e4e7;
+      border-radius: 9999px;
+      position: relative;
+      cursor: pointer;
+      display: inline-block;
+    }
+    .shadcn-switch.checked { background: #18181b; }
+    .shadcn-switch::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .shadcn-switch.checked::after { transform: translateX(20px); }
+    
+    .shadcn-radio {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e4e4e7;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: #fff;
+    }
+    .shadcn-radio.selected { border-color: #18181b; }
+    .shadcn-radio.selected::after { content: ''; width: 8px; height: 8px; background: #18181b; border-radius: 50%; }
+    
+    .shadcn-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #f4f4f5;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: #64748b;
+      overflow: hidden;
+    }
+    .shadcn-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .shadcn-card {
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .shadcn-card-header { padding: 16px; border-bottom: 1px solid #f4f4f5; }
+    .shadcn-card-title { font-size: 14px; font-weight: 600; color: #18181b; }
+    .shadcn-card-desc { font-size: 12px; color: #71717a; margin-top: 4px; }
+    .shadcn-card-content { padding: 16px; }
+    .shadcn-card-footer { padding: 16px; border-top: 1px solid #f4f4f5; }
+    
+    .shadcn-progress {
+      width: 100%;
+      height: 8px;
+      background: #f4f4f5;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .shadcn-progress-bar { height: 100%; background: #18181b; transition: width 0.3s; }
+    
+    .shadcn-alert {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+    .shadcn-alert-icon { color: #3b82f6; font-size: 18px; }
+    .shadcn-alert-title { font-size: 14px; font-weight: 500; color: #18181b; }
+    .shadcn-alert-desc { font-size: 12px; color: #71717a; margin-top: 4px; }
+    
+    .shadcn-tabs { display: flex; border-bottom: 1px solid #e4e4e7; }
+    .shadcn-tab {
+      padding: 10px 16px;
+      font-size: 14px;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      background: none;
+      color: #71717a;
+    }
+    .shadcn-tab:hover { color: #18181b; }
+    .shadcn-tab.active { border-bottom-color: #18181b; color: #18181b; }
+    
+    .shadcn-pagination { display: flex; gap: 4px; }
+    .shadcn-pagination-item {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      background: none;
+      border: 1px solid transparent;
+    }
+    .shadcn-pagination-item:hover { background: #f4f4f5; }
+    .shadcn-pagination-item.active { background: #18181b; color: #fff; }
+    
+    .shadcn-tooltip {
+      background: #18181b;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    
+    .shadcn-accordion {
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .shadcn-accordion-item { border-bottom: 1px solid #e4e4e7; }
+    .shadcn-accordion-item:last-child { border-bottom: none; }
+    .shadcn-accordion-trigger {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .shadcn-accordion-content { padding: 16px; background: #fff; font-size: 14px; color: #71717a; }
+    
+    .shadcn-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 10px 12px;
+      border: 1px solid #e4e4e7;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      resize: vertical;
+      background: #fff;
+    }
+    
+    .shadcn-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e4e4e7;
+      border-radius: 6px;
+      font-size: 14px;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
   <canvas id="canvas"></canvas>
+  
+  <!-- shadcn 组件叠加层 -->
+  <div id="component-overlay"></div>
   
   <div class="control-panel">
     <div class="panel-header">
@@ -458,9 +467,7 @@
     </div>
   </div>
   
-  <div class="components-panel" id="componentsPanel">
-    <!-- React will render here -->
-  </div>
+  <div class="components-panel" id="componentsPanel"></div>
   
   <button class="toggle-components secondary" onclick="toggleComponents()">📦</button>
   <div id="drag-overlay" class="drag-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(59,130,246,0.95);z-index:1000;justify-content:center;align-items:center;"><p style="color:white;font-size:24px;">Drop .pen file here</p></div>
@@ -482,6 +489,9 @@ let panX = 0;
 let panY = 0;
 let components = [];
 let activeComponentId = null;
+let renderScale = 1;
+let renderOffsetX = 0;
+let renderOffsetY = 0;
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -667,12 +677,13 @@ function renderDocument(doc) {
     });
     const baseScale = currentZoom / 100;
     const fitScale = Math.min(canvas.width / maxWidth, canvas.height / maxHeight, 1);
-    const scale = fitScale * baseScale;
-    const offsetX = (minX < 0 ? -minX : 0) + panX;
-    const offsetY = (minY < 0 ? -minY : 0) + panY;
+    renderScale = fitScale * baseScale;
+    renderOffsetX = (minX < 0 ? -minX : 0) + panX;
+    renderOffsetY = (minY < 0 ? -minY : 0) + panY;
+    
     ctx.save();
-    ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
+    ctx.translate(renderOffsetX, renderOffsetY);
+    ctx.scale(renderScale, renderScale);
     doc.children.forEach(child => {
       let width = resolveSize(child.width, maxWidth);
       let height = resolveSize(child.height, maxHeight);
@@ -680,28 +691,11 @@ function renderDocument(doc) {
       if (!child.height) height = maxHeight;
       renderNode(ctx, child, child.x || 0, child.y || 0, width, height);
     });
-    if (activeComponentId) {
-      const activeComp = components.find(c => c.id === activeComponentId);
-      if (activeComp) {
-        ctx.save();
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 3 / scale;
-        ctx.setLineDash([8 / scale, 4 / scale]);
-        ctx.strokeRect(activeComp.x - 6, activeComp.y - 6, activeComp.width + 12, activeComp.height + 12);
-        ctx.setLineDash([]);
-        const labelHeight = 20 / scale;
-        ctx.font = `bold ${12 / scale}px -apple-system, sans-serif`;
-        const textWidth = ctx.measureText(activeComp.name).width;
-        ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(activeComp.x - 6, activeComp.y - 6 - labelHeight, textWidth + 12 / scale, labelHeight);
-        ctx.fillStyle = '#ffffff';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(activeComp.name, activeComp.x, activeComp.y - 6 - labelHeight / 2);
-        ctx.restore();
-      }
-    }
     ctx.restore();
   }
+  
+  // 更新叠加的 shadcn 组件位置
+  updateComponentOverlay();
 }
 
 function extractComponents(node, parentX = 0, parentY = 0, result = []) {
@@ -727,7 +721,7 @@ function loadAndRender(doc) {
   penDocument = doc;
   components = [];
   if (doc.children) doc.children.forEach(child => extractComponents(child, 0, 0, components));
-  renderReactComponents();
+  renderReactList();
   activeComponentId = null;
   panX = 0; panY = 0; currentZoom = 100;
   document.getElementById('zoomSlider').value = 100;
@@ -755,14 +749,15 @@ function resetView() {
   panX = 0; panY = 0; currentZoom = 100;
   document.getElementById('zoomSlider').value = 100;
   document.getElementById('zoomValue').textContent = '100%';
+  activeComponentId = null;
   if (penDocument) renderDocument(penDocument);
+  renderReactList();
 }
 
 function toggleTheme() {
   currentTheme.Mode = currentTheme.Mode === 'Light' ? 'Dark' : 'Light';
   resolveVariables(penDocument);
   renderDocument(penDocument);
-  renderReactComponents();
 }
 
 function toggleComponents() {
@@ -772,7 +767,11 @@ function toggleComponents() {
 function focusComponent(id) {
   const comp = components.find(c => c.id === id);
   if (!comp) return;
+  
+  const prevId = activeComponentId;
   activeComponentId = id;
+  
+  // 计算是否需要移动视图
   let minX = 0, minY = 0, maxWidth = canvas.width, maxHeight = canvas.height;
   if (penDocument && penDocument.children) {
     penDocument.children.forEach(child => {
@@ -782,21 +781,23 @@ function focusComponent(id) {
       if (child.height && typeof child.height === 'number' && child.height > maxHeight) maxHeight = child.height;
     });
   }
-  const scale = Math.min(canvas.width / maxWidth, canvas.height / maxHeight, 1) * (currentZoom / 100);
+  
   const offsetX = minX < 0 ? -minX : 0;
   const offsetY = minY < 0 ? -minY : 0;
-  const screenX = (comp.x + offsetX) * scale + panX;
-  const screenY = (comp.y + offsetY) * scale + panY;
-  const screenW = comp.width * scale;
-  const screenH = comp.height * scale;
-  const margin = 50;
+  const screenX = (comp.x + offsetX) * renderScale + panX;
+  const screenY = (comp.y + offsetY) * renderScale + panY;
+  const screenW = comp.width * renderScale;
+  const screenH = comp.height * renderScale;
+  const margin = 100;
   const isVisible = screenX >= margin && screenX + screenW <= canvas.width - margin && screenY >= margin && screenY + screenH <= canvas.height - margin;
+  
   if (!isVisible) {
-    panX = canvas.width / 2 - (comp.x + offsetX + comp.width / 2) * scale;
-    panY = canvas.height / 2 - (comp.y + offsetY + comp.height / 2) * scale;
+    panX = canvas.width / 2 - (comp.x + offsetX + comp.width / 2) * renderScale;
+    panY = canvas.height / 2 - (comp.y + offsetY + comp.height / 2) * renderScale;
   }
+  
   renderDocument(penDocument);
-  renderReactComponents();
+  renderReactList();
 }
 
 function downloadCanvas() {
@@ -806,45 +807,99 @@ function downloadCanvas() {
   link.click();
 }
 
-// ====== React Components Panel ======
+// ====== React 渲染 ======
 const e = React.createElement;
 
-// shadcn-style component previews
-const ComponentPreviews = {
-  'Button/Default': () => e('button', { className: 'preview-btn preview-btn-primary' }, 'Button'),
-  'Button/Secondary': () => e('button', { className: 'preview-btn preview-btn-secondary' }, 'Button'),
-  'Button/Destructive': () => e('button', { className: 'preview-btn preview-btn-destructive' }, 'Button'),
-  'Button/Outline': () => e('button', { className: 'preview-btn preview-btn-outline' }, 'Button'),
-  'Button/Ghost': () => e('button', { className: 'preview-btn preview-btn-ghost' }, 'Button'),
-  'Badge/Default': () => e('span', { className: 'preview-badge preview-badge-default' }, 'Badge'),
-  'Badge/Secondary': () => e('span', { className: 'preview-badge preview-badge-secondary' }, 'Badge'),
-  'Badge/Destructive': () => e('span', { className: 'preview-badge preview-badge-destructive' }, 'Badge'),
-  'Badge/Outline': () => e('span', { className: 'preview-badge preview-badge-outline' }, 'Badge'),
-  'Input/Default': () => e('input', { className: 'preview-input', placeholder: 'Type here...' }),
-  'Checkbox/Checked': () => e('div', { className: 'preview-checkbox checked' }, '✓'),
-  'Switch/Checked': () => e('div', { className: 'preview-switch checked' }),
-  'Switch/Unchecked': () => e('div', { className: 'preview-switch' }),
-  'Radio/Selected': () => e('div', { style: { width: 16, height: 16, borderRadius: '50%', border: '2px solid #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, e('div', { style: { width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' } })),
-  'Radio/Unselected': () => e('div', { style: { width: 16, height: 16, borderRadius: '50%', border: '2px solid #e4e4e7' } }),
-  'Avatar/Text': () => e('div', { className: 'preview-avatar' }, 'JD'),
-  'Card': () => e('div', { className: 'preview-card' }, e('div', { style: { fontSize: 11, fontWeight: 500 } }, 'Card Title'), e('div', { style: { fontSize: 10, color: '#64748b', marginTop: 4 } }, 'Card description')),
-  'Progress': () => e('div', { className: 'preview-progress' }, e('div', { className: 'preview-progress-bar' })),
-  'Alert/Default': () => e('div', { className: 'preview-alert', style: { padding: 8 } }, e('span', { style: { fontSize: 11 } }, 'ℹ️ Alert')),
-  'Tabs': () => e('div', { className: 'preview-tabs' }, e('div', { className: 'preview-tab active' }, 'Tab 1'), e('div', { className: 'preview-tab' }, 'Tab 2')),
-  'Pagination': () => e('div', { style: { display: 'flex', gap: 4 } }, [1, 2, 3].map(n => e('div', { key: n, style: { width: 24, height: 24, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, background: n === 1 ? '#3b82f6' : '#f4f4f5', color: n === 1 ? '#fff' : '#333' } }, n))),
-  'Breadcrumb Item': () => e('div', { style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 } }, 'Home', e('span', null, '/'), 'Page'),
-  'Sidebar': () => e('div', { style: { width: '100%', height: 50, background: '#f4f4f5', borderRadius: 4, padding: 4, display: 'flex', flexDirection: 'column', gap: 4 } }, e('div', { style: { height: 6, width: 20, background: '#3b82f6', borderRadius: 2 } }), e('div', { style: { height: 4, width: 30, background: '#e4e4e7', borderRadius: 2 } }), e('div', { style: { height: 4, width: 25, background: '#e4e4e7', borderRadius: 2 } })),
-  'Dialog': () => e('div', { style: { border: '1px solid #e4e4e7', borderRadius: 8, padding: 8, width: '100%' } }, e('div', { style: { fontSize: 11, fontWeight: 500 } }, 'Dialog Title'), e('div', { style: { fontSize: 10, color: '#64748b', marginTop: 4 } }, 'Dialog description')),
-  'Accordion/Open': () => e('div', { style: { border: '1px solid #e4e4e7', borderRadius: 4, width: '100%' } }, e('div', { style: { padding: 6, fontSize: 10, borderBottom: '1px solid #e4e4e7' } }, '▼ Accordion'), e('div', { style: { padding: 6, fontSize: 9, color: '#64748b' } }, 'Content')),
-  'Tooltip': () => e('div', { style: { background: '#18181b', color: '#fff', padding: '4px 8px', borderRadius: 4, fontSize: 10 } }, 'Tooltip'),
-  'Textarea': () => e('textarea', { className: 'preview-input', style: { height: 40, resize: 'none' }, placeholder: 'Enter text...' }),
-  'Select': () => e('div', { style: { width: '100%', padding: '6px 10px', border: '1px solid #e4e4e7', borderRadius: 6, fontSize: 11, display: 'flex', justifyContent: 'space-between' } }, e('span', null, 'Select...'), e('span', null, '▼')),
+// shadcn 组件定义
+const ShadcnComponents = {
+  'Button/Default': () => `<button class="shadcn-btn shadcn-btn-primary">Button</button>`,
+  'Button/Secondary': () => `<button class="shadcn-btn shadcn-btn-secondary">Button</button>`,
+  'Button/Destructive': () => `<button class="shadcn-btn shadcn-btn-destructive">Button</button>`,
+  'Button/Outline': () => `<button class="shadcn-btn shadcn-btn-outline">Button</button>`,
+  'Button/Ghost': () => `<button class="shadcn-btn shadcn-btn-ghost">Button</button>`,
+  'Button/Large/Default': () => `<button class="shadcn-btn shadcn-btn-primary" style="height:48px;padding:12px 24px;">Button</button>`,
+  'Button/Large/Secondary': () => `<button class="shadcn-btn shadcn-btn-secondary" style="height:48px;padding:12px 24px;">Button</button>`,
+  'Button/Large/Destructive': () => `<button class="shadcn-btn shadcn-btn-destructive" style="height:48px;padding:12px 24px;">Button</button>`,
+  'Button/Large/Outline': () => `<button class="shadcn-btn shadcn-btn-outline" style="height:48px;padding:12px 24px;">Button</button>`,
+  'Button/Large/Ghost': () => `<button class="shadcn-btn shadcn-btn-ghost" style="height:48px;padding:12px 24px;">Button</button>`,
+  'Badge/Default': () => `<span class="shadcn-badge shadcn-badge-default">Badge</span>`,
+  'Badge/Secondary': () => `<span class="shadcn-badge shadcn-badge-secondary">Badge</span>`,
+  'Badge/Destructive': () => `<span class="shadcn-badge shadcn-badge-destructive">Badge</span>`,
+  'Badge/Outline': () => `<span class="shadcn-badge shadcn-badge-outline">Badge</span>`,
+  'Input/Default': () => `<input class="shadcn-input" placeholder="Type here...">`,
+  'Input/Filled': () => `<input class="shadcn-input" style="background:#f4f4f5;" value="Filled input">`,
+  'Input Group/Default': () => `<div><label style="font-size:12px;font-weight:500;display:block;margin-bottom:6px;">Label</label><input class="shadcn-input" placeholder="Type here..."></div>`,
+  'Input Group/Filled': () => `<div><label style="font-size:12px;font-weight:500;display:block;margin-bottom:6px;">Label</label><input class="shadcn-input" style="background:#f4f4f5;" value="Filled"></div>`,
+  'Checkbox/Checked': () => `<div class="shadcn-checkbox checked">✓</div>`,
+  'Switch/Checked': () => `<div class="shadcn-switch checked"></div>`,
+  'Switch/Unchecked': () => `<div class="shadcn-switch"></div>`,
+  'Radio/Selected': () => `<div class="shadcn-radio selected"></div>`,
+  'Radio/Unselected': () => `<div class="shadcn-radio"></div>`,
+  'Avatar/Text': () => `<div class="shadcn-avatar">JD</div>`,
+  'Avatar/Image': () => `<div class="shadcn-avatar"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar"></div>`,
+  'Card': () => `<div class="shadcn-card"><div class="shadcn-card-header"><div class="shadcn-card-title">Card Title</div><div class="shadcn-card-desc">Card description</div></div><div class="shadcn-card-content">Content here</div></div>`,
+  'Card Plain': () => `<div class="shadcn-card"><div class="shadcn-card-content">Plain card content</div></div>`,
+  'Progress': () => `<div class="shadcn-progress"><div class="shadcn-progress-bar" style="width:60%;"></div></div>`,
+  'Alert/Default': () => `<div class="shadcn-alert"><span class="shadcn-alert-icon">ℹ️</span><div><div class="shadcn-alert-title">Alert Title</div><div class="shadcn-alert-desc">Alert description</div></div></div>`,
+  'Tabs': () => `<div class="shadcn-tabs"><div class="shadcn-tab active">Tab 1</div><div class="shadcn-tab">Tab 2</div><div class="shadcn-tab">Tab 3</div></div>`,
+  'Pagination': () => `<div class="shadcn-pagination"><div class="shadcn-pagination-item">1</div><div class="shadcn-pagination-item active">2</div><div class="shadcn-pagination-item">3</div></div>`,
+  'Breadcrumb Item': () => `<div style="display:flex;align-items:center;gap:8px;font-size:14px;"><span style="color:#71717a;">Home</span><span style="color:#d4d4d8;">/</span><span>Page</span></div>`,
+  'Sidebar': () => `<div style="width:200px;background:#f4f4f5;border-radius:8px;padding:16px;"><div style="font-weight:600;font-size:14px;margin-bottom:12px;">Menu</div><div style="padding:8px;background:#fff;border-radius:4;margin-bottom:4;">Item 1</div><div style="padding:8px;border-radius:4;">Item 2</div><div style="padding:8px;border-radius:4;">Item 3</div></div>`,
+  'Dialog': () => `<div class="shadcn-card" style="max-width:300px;"><div class="shadcn-card-header"><div class="shadcn-card-title">Dialog Title</div><div class="shadcn-card-desc">Dialog description</div></div><div class="shadcn-card-footer" style="display:flex;gap:8px;justify-content:flex-end;"><button class="shadcn-btn shadcn-btn-outline" style="height:32px;font-size:12px;">Cancel</button><button class="shadcn-btn shadcn-btn-primary" style="height:32px;font-size:12px;">OK</button></div></div>`,
+  'Accordion/Open': () => `<div class="shadcn-accordion"><div class="shadcn-accordion-item"><div class="shadcn-accordion-trigger">▼ Section 1</div><div class="shadcn-accordion-content">Accordion content here.</div></div></div>`,
+  'Tooltip': () => `<div class="shadcn-tooltip">This is a tooltip</div>`,
+  'Textarea': () => `<textarea class="shadcn-textarea" placeholder="Enter text..."></textarea>`,
+  'Textarea Group/Default': () => `<div><label style="font-size:12px;font-weight:500;display:block;margin-bottom:6px;">Label</label><textarea class="shadcn-textarea" placeholder="Enter text..."></textarea></div>`,
+  'Select Group/Default': () => `<div><label style="font-size:12px;font-weight:500;display:block;margin-bottom:6px;">Label</label><div class="shadcn-select">Select an option <span>▼</span></div></div>`,
+  'Combobox/Default': () => `<div><input class="shadcn-input" placeholder="Search..." style="padding-right:30px;"><div style="margin-top:4px;border:1px solid #e4e4e7;border-radius:6px;overflow:hidden;"><div style="padding:8px;font-size:14px;">Option 1</div><div style="padding:8px;font-size:14px;background:#f4f4f5;">Option 2</div></div></div>`,
 };
 
-// Default preview for unknown components
-const DefaultPreview = ({ name }) => e('div', { style: { padding: 8, fontSize: 10, color: '#64748b', textAlign: 'center' } }, name.split('/')[0]);
+// 更新组件叠加层
+function updateComponentOverlay() {
+  const overlay = document.getElementById('component-overlay');
+  if (!activeComponentId) {
+    overlay.innerHTML = '';
+    return;
+  }
+  
+  const comp = components.find(c => c.id === activeComponentId);
+  if (!comp) {
+    overlay.innerHTML = '';
+    return;
+  }
+  
+  const generator = ShadcnComponents[comp.name];
+  if (!generator) {
+    overlay.innerHTML = '';
+    return;
+  }
+  
+  // 计算屏幕位置
+  const screenX = (comp.x + (renderOffsetX - panX) / renderScale) * renderScale + panX;
+  const screenY = (comp.y + (renderOffsetY - panY) / renderScale) * renderScale + panY;
+  
+  // 在组件位置右侧显示 shadcn 组件
+  const html = generator();
+  const compWidth = comp.width * renderScale;
+  const compHeight = comp.height * renderScale;
+  
+  overlay.innerHTML = `
+    <div class="overlay-component" style="
+      left: ${screenX + compWidth + 20}px;
+      top: ${screenY}px;
+      max-width: 300px;
+    ">
+      <div style="padding:8px;background:#f4f4f5;font-size:10px;color:#64748b;border-bottom:1px solid #e4e4e7;">
+        ${comp.name}
+      </div>
+      <div style="padding:16px;">
+        ${html}
+      </div>
+    </div>
+  `;
+}
 
-// Category mapping
+// 组件分类
 const componentCategory = {
   'Button': 'Form', 'Icon Button': 'Form', 'Input': 'Form', 'Input Group': 'Form', 'Input OTP': 'Form', 'Input OTP Group': 'Form',
   'Select': 'Form', 'Textarea': 'Form', 'Checkbox': 'Form', 'Radio': 'Form', 'Switch': 'Form', 'Combobox': 'Form',
@@ -856,7 +911,7 @@ const componentCategory = {
   'Dialog': 'Overlay', 'Dropdown': 'Overlay', 'Modal': 'Overlay', 'Tooltip': 'Overlay',
 };
 
-function renderReactComponents() {
+function renderReactList() {
   const reusableComponents = components.filter(c => c.reusable);
   const categories = {};
   reusableComponents.forEach(comp => {
@@ -874,17 +929,25 @@ function renderReactComponents() {
     if (!items || items.length === 0) return null;
     
     return e('div', { key: cat, className: 'category-section' },
-      e('div', { className: 'category-title' }, `${categoryIcons[cat] || '📦'} ${cat} (${items.length})`),
-      e('div', { className: 'component-grid' },
+      e('div', { className: 'category-title' }, 
+        `${categoryIcons[cat] || '📦'} ${cat}`,
+        e('span', null, items.length)
+      ),
+      e('div', { className: 'component-list' },
         items.map(comp => {
-          const Preview = ComponentPreviews[comp.name] || (() => e(DefaultPreview, { name: comp.name }));
+          const parts = comp.name.split('/');
+          const baseName = parts[0];
+          const variant = parts.length > 1 ? parts.slice(1).join('/') : '';
+          const hasShadcn = !!ShadcnComponents[comp.name];
+          
           return e('div', {
             key: comp.id,
-            className: `component-preview ${activeComponentId === comp.id ? 'active' : ''}`,
+            className: `component-item ${activeComponentId === comp.id ? 'active' : ''}`,
             onClick: () => focusComponent(comp.id)
           },
-            e(Preview),
-            e('div', { className: 'component-label' }, comp.name.split('/')[1] || comp.name.split('/')[0])
+            e('span', { className: 'comp-name' }, baseName),
+            variant ? e('span', { className: 'comp-variant' }, variant) : null,
+            hasShadcn ? e('span', { style: { fontSize: '9px', background: '#22c55e', color: '#fff', padding: '1px 4px', borderRadius: '3px' } }, 'UI') : null
           );
         })
       )
@@ -913,12 +976,17 @@ function setupPan() {
   canvas.addEventListener('mousedown', (e) => {
     const controlPanel = document.querySelector('.control-panel');
     const componentsPanel = document.querySelector('.components-panel');
+    const overlay = document.getElementById('component-overlay');
     if (controlPanel) {
       const rect = controlPanel.getBoundingClientRect();
       if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
     }
     if (componentsPanel) {
       const rect = componentsPanel.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
+    }
+    if (overlay) {
+      const rect = overlay.getBoundingClientRect();
       if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
     }
     isDragging = true;
