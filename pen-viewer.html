@@ -200,10 +200,31 @@ function resizeCanvas() {
 
 // 解析变量
 function resolveVariables(doc) {
+  variables = {};
+  
+  // 从文档变量定义
   if (doc.variables) {
-    variables = {};
     for (const [key, val] of Object.entries(doc.variables)) {
-      variables[key] = val.value;
+      variables[key] = typeof val === 'object' && val.value !== undefined ? val.value : val;
+    }
+  }
+  
+  // 默认变量值（用于 pencil-new.pen 等无变量定义的文件）
+  const defaults = {
+    '--bg-page': '#ffffff',
+    '--bg-card': '#ffffff',
+    '--border': '#e5e7eb',
+    '--black-primary': '#1f2937',
+    '--black-secondary': '#4b5563',
+    '--red-primary': '#ef4444',
+    '--text-primary': '#1f2937',
+    '--text-secondary': '#6b7280',
+    '--text-muted': '#9ca3af'
+  };
+  
+  for (const [key, val] of Object.entries(defaults)) {
+    if (variables[key] === undefined) {
+      variables[key] = val;
     }
   }
 }
@@ -213,7 +234,7 @@ function resolveColor(color) {
   if (!color) return null;
   if (typeof color === 'string') {
     if (color.startsWith('$')) {
-      return variables[color.slice(1)] || color;
+      return variables[color.slice(1)] || '#888888';
     }
     return color;
   }
@@ -221,6 +242,23 @@ function resolveColor(color) {
     return color.colors?.[0]?.color || '#888';
   }
   return color;
+}
+
+// 解析描边粗细
+function resolveStrokeThickness(thickness) {
+  if (thickness === undefined || thickness === null) return 1;
+  if (typeof thickness === 'number') return thickness;
+  if (typeof thickness === 'object') {
+    // 处理 { top, right, bottom, left } 或 { right: 1 } 格式
+    const max = Math.max(
+      thickness.top || 0,
+      thickness.right || 0,
+      thickness.bottom || 0,
+      thickness.left || 0
+    );
+    return max || 1;
+  }
+  return 1;
 }
 
 // 解析尺寸值
@@ -311,7 +349,7 @@ function renderFrameOrRect(ctx, node, x, y, width, height) {
     if (strokeColor) {
       drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
       ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = node.stroke.thickness || 1;
+      ctx.lineWidth = resolveStrokeThickness(node.stroke.thickness);
       ctx.stroke();
     }
   }
