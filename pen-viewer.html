@@ -6,46 +6,115 @@
   <title>.pen Viewer</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #1a1a2e;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
+      background: #0f172a;
     }
-    h1 { color: #fff; margin-bottom: 20px; }
-    .canvas-wrapper {
-      overflow: auto;
-      max-width: 90vw;
-      max-height: 70vh;
-    }
-    #canvas-container {
-      background: #0f0f1a;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      display: inline-block;
-    }
-    canvas {
-      background: #fff;
-      border-radius: 8px;
+    
+    /* 全屏画布 */
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       display: block;
     }
-    .controls {
+    
+    /* 浮动控制面板 */
+    .control-panel {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .panel-header {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
       align-items: center;
+      gap: 8px;
     }
+    
+    .panel-header .logo {
+      width: 24px;
+      height: 24px;
+      background: #3b82f6;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .panel-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    button:hover { background: #2563eb; }
+    button.secondary {
+      background: rgba(255,255,255,0.1);
+    }
+    button.secondary:hover { background: rgba(255,255,255,0.2); }
+    
+    .zoom-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+    
     #zoomSlider {
-      width: 100px;
+      width: 80px;
+      cursor: pointer;
     }
+    
+    .info {
+      color: #64748b;
+      font-size: 11px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 12px;
+    }
+    
+    /* 拖放覆盖 */
     .drag-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(59, 130, 246, 0.9);
+      background: rgba(59, 130, 246, 0.95);
       display: none;
       justify-content: center;
       align-items: center;
@@ -56,46 +125,57 @@
     }
     .drag-overlay p {
       color: white;
-      font-size: 24px;
+      font-size: 32px;
       font-weight: bold;
     }
-    .controls {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
+    
+    /* 隐藏面板按钮 */
+    .toggle-panel {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 99;
+      display: none;
     }
-    button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background: #3b82f6;
-      color: white;
-      cursor: pointer;
-      font-size: 14px;
+    .panel-hidden .control-panel {
+      display: none;
     }
-    button:hover { background: #2563eb; }
-    .info {
-      color: #888;
-      margin-top: 10px;
-      font-size: 12px;
+    .panel-hidden .toggle-panel {
+      display: block;
     }
   </style>
 </head>
 <body>
-  <h1>.pen File Viewer</h1>
-  <div class="canvas-wrapper">
-    <div id="canvas-container">
-      <canvas id="canvas" width="800" height="600"></canvas>
+  <canvas id="canvas"></canvas>
+  
+  <div class="control-panel">
+    <div class="panel-header">
+      <div class="logo">P</div>
+      <span>.pen Viewer</span>
+    </div>
+    
+    <div class="panel-row">
+      <button onclick="loadSample()">Load Sample</button>
+      <button class="secondary" onclick="downloadCanvas()">⬇ PNG</button>
+    </div>
+    
+    <div class="zoom-control">
+      <span>Zoom:</span>
+      <input type="range" id="zoomSlider" min="25" max="200" value="100" onchange="setZoom(this.value)">
+      <span id="zoomValue">100%</span>
+    </div>
+    
+    <div class="info">
+      Canvas: <span id="canvasSize">-</span><br>
+      Drag & drop a .pen file to view
     </div>
   </div>
-  <div class="controls">
-    <button onclick="loadSample()">Load sample.pen</button>
-    <button onclick="downloadCanvas()">Download PNG</button>
-    <label>Zoom: </label>
-    <input type="range" id="zoomSlider" min="25" max="200" value="100" onchange="setZoom(this.value)">
-    <span id="zoomValue">100%</span>
+  
+  <button class="toggle-panel secondary" onclick="togglePanel()">☰</button>
+  
+  <div id="drag-overlay" class="drag-overlay">
+    <p>Drop .pen file here</p>
   </div>
-  <div class="info">Canvas: 800 x 600 | Drag & drop a .pen file to view</div>
 
 <script>
 // ====== Pen Renderer ======
@@ -105,6 +185,18 @@ const ctx = canvas.getContext('2d');
 
 // 变量存储
 let variables = {};
+let currentZoom = 100;
+let penDocument = null;
+
+// 初始化画布大小
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.getElementById('canvasSize').textContent = `${canvas.width} x ${canvas.height}`;
+  if (penDocument) {
+    renderDocument(penDocument);
+  }
+}
 
 // 解析变量
 function resolveVariables(doc) {
@@ -116,7 +208,7 @@ function resolveVariables(doc) {
   }
 }
 
-// 解析颜色值（支持变量引用）
+// 解析颜色值
 function resolveColor(color) {
   if (!color) return null;
   if (typeof color === 'string') {
@@ -126,7 +218,6 @@ function resolveColor(color) {
     return color;
   }
   if (color.type === 'gradient') {
-    // TODO: 实现渐变
     return color.colors?.[0]?.color || '#888';
   }
   return color;
@@ -135,7 +226,7 @@ function resolveColor(color) {
 // 解析尺寸值
 function resolveSize(val, parentSize = 0) {
   if (val === 'fill_container') return parentSize;
-  if (val === 'fit_content') return null; // 需要计算子元素
+  if (val === 'fit_content') return null;
   if (typeof val === 'string' && val.startsWith('$')) {
     return variables[val.slice(1)] || 0;
   }
@@ -144,6 +235,7 @@ function resolveSize(val, parentSize = 0) {
 
 // 绘制圆角矩形
 function drawRoundedRect(ctx, x, y, width, height, radius) {
+  if (width <= 0 || height <= 0) return;
   radius = Math.min(radius || 0, width / 2, height / 2);
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -158,16 +250,17 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
-// 绘制单个节点
+// 渲染节点
 function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parentHeight = 0) {
   const x = parentX + (node.x || 0);
   const y = parentY + (node.y || 0);
   const width = resolveSize(node.width, parentWidth);
   const height = resolveSize(node.height, parentHeight);
   
+  if (width <= 0 || height <= 0) return;
+  
   ctx.save();
   
-  // 不透明度
   if (node.opacity !== undefined) {
     ctx.globalAlpha = node.opacity;
   }
@@ -177,34 +270,25 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
     case 'rectangle':
       renderFrameOrRect(ctx, node, x, y, width, height);
       break;
-      
     case 'ellipse':
       renderEllipse(ctx, node, x, y, width, height);
       break;
-      
     case 'text':
       renderText(ctx, node, x, y, width, height);
       break;
-      
     case 'line':
       renderLine(ctx, node, x, y, width, height);
       break;
-      
-    default:
-      console.log('Unknown node type:', node.type);
   }
   
   ctx.restore();
   
-  // 渲染子元素
   if (node.children && node.children.length > 0) {
     renderChildren(ctx, node, x, y, width, height);
   }
 }
 
-// 渲染 Frame 或 Rectangle
 function renderFrameOrRect(ctx, node, x, y, width, height) {
-  // 阴影效果
   if (node.effect && node.effect.type === 'shadow') {
     const shadow = node.effect;
     ctx.shadowColor = resolveColor(shadow.color) || 'rgba(0,0,0,0.1)';
@@ -213,7 +297,6 @@ function renderFrameOrRect(ctx, node, x, y, width, height) {
     ctx.shadowOffsetY = shadow.offset?.y || 0;
   }
   
-  // 填充
   const fillColor = resolveColor(node.fill);
   if (fillColor) {
     drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
@@ -221,10 +304,8 @@ function renderFrameOrRect(ctx, node, x, y, width, height) {
     ctx.fill();
   }
   
-  // 重置阴影以绘制边框
   ctx.shadowColor = 'transparent';
   
-  // 边框
   if (node.stroke && node.stroke.fill) {
     const strokeColor = resolveColor(node.stroke.fill);
     if (strokeColor) {
@@ -236,24 +317,16 @@ function renderFrameOrRect(ctx, node, x, y, width, height) {
   }
 }
 
-// 渲染椭圆
 function renderEllipse(ctx, node, x, y, width, height) {
   const fillColor = resolveColor(node.fill);
   if (fillColor) {
     ctx.beginPath();
-    ctx.ellipse(
-      x + width / 2, 
-      y + height / 2, 
-      width / 2, 
-      height / 2, 
-      0, 0, Math.PI * 2
-    );
+    ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
     ctx.fillStyle = fillColor;
     ctx.fill();
   }
 }
 
-// 渲染文本
 function renderText(ctx, node, x, y, width, height) {
   const fillColor = resolveColor(node.fill);
   if (!fillColor) return;
@@ -269,7 +342,6 @@ function renderText(ctx, node, x, y, width, height) {
   ctx.fillText(node.content || '', textX, textY);
 }
 
-// 渲染线条
 function renderLine(ctx, node, x, y, width, height) {
   const strokeColor = resolveColor(node.stroke?.fill || node.fill);
   if (!strokeColor) return;
@@ -282,7 +354,6 @@ function renderLine(ctx, node, x, y, width, height) {
   ctx.stroke();
 }
 
-// 渲染子元素（支持 flexbox 布局）
 function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight) {
   if (!parent.children || parent.children.length === 0) return;
   
@@ -292,7 +363,6 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
   const justifyContent = parent.justifyContent || 'start';
   const alignItems = parent.alignItems || 'start';
   
-  // 计算 padding
   let paddingTop, paddingRight, paddingBottom, paddingLeft;
   if (Array.isArray(padding)) {
     if (padding.length === 2) {
@@ -311,45 +381,33 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
   const contentHeight = parentHeight - paddingTop - paddingBottom;
   
   if (layout === 'none') {
-    // 绝对定位
     parent.children.forEach(child => {
       renderNode(ctx, child, parentX, parentY, parentWidth, parentHeight);
     });
   } else if (layout === 'horizontal') {
-    // 水平布局
-    let currentX = contentX;
-    const totalGap = gap * (parent.children.length - 1);
+    let startX = contentX;
     const childrenWithWidth = parent.children.map(child => {
       const w = resolveSize(child.width, contentWidth);
       return { child, width: w === null ? 0 : w };
     });
     
-    // 计算总宽度
-    let totalWidth = childrenWithWidth.reduce((sum, { width }) => sum + width, 0) + totalGap;
+    let totalWidth = childrenWithWidth.reduce((sum, { width }) => sum + width, 0) + gap * (parent.children.length - 1);
     
-    // justify alignment
-    let startX = contentX;
     if (justifyContent === 'center') {
       startX = contentX + (contentWidth - totalWidth) / 2;
     } else if (justifyContent === 'end') {
       startX = contentX + contentWidth - totalWidth;
-    } else if (justifyContent === 'space_between') {
+    } else if (justifyContent === 'space_between' && parent.children.length > 1) {
       const extraSpace = contentWidth - childrenWithWidth.reduce((sum, { width }) => sum + width, 0);
-      const spaceBetween = extraSpace / (parent.children.length - 1 || 1);
+      const spaceBetween = extraSpace / (parent.children.length - 1);
       childrenWithWidth.forEach((item, i) => {
         const childHeight = resolveSize(item.child.height, contentHeight);
         let childY = contentY;
-        if (alignItems === 'center') {
-          childY = contentY + (contentHeight - childHeight) / 2;
-        } else if (alignItems === 'end') {
-          childY = contentY + contentHeight - childHeight;
-        }
+        if (alignItems === 'center') childY = contentY + (contentHeight - childHeight) / 2;
+        else if (alignItems === 'end') childY = contentY + contentHeight - childHeight;
         
-        item.child.x = startX - parentX;
-        item.child.y = childY - parentY;
         renderNode(ctx, item.child, startX, childY, item.width, childHeight);
-        
-        startX += item.width + (i < parent.children.length - 1 ? spaceBetween : 0);
+        startX += item.width + spaceBetween;
       });
       return;
     }
@@ -357,21 +415,14 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
     childrenWithWidth.forEach((item, i) => {
       const childHeight = resolveSize(item.child.height, contentHeight);
       let childY = contentY;
-      if (alignItems === 'center') {
-        childY = contentY + (contentHeight - childHeight) / 2;
-      } else if (alignItems === 'end') {
-        childY = contentY + contentHeight - childHeight;
-      }
+      if (alignItems === 'center') childY = contentY + (contentHeight - childHeight) / 2;
+      else if (alignItems === 'end') childY = contentY + contentHeight - childHeight;
       
-      item.child.x = startX - parentX;
-      item.child.y = childY - parentY;
       renderNode(ctx, item.child, startX, childY, item.width, childHeight);
-      
       startX += item.width + gap;
     });
     
   } else if (layout === 'vertical') {
-    // 垂直布局
     let currentY = contentY;
     
     parent.children.forEach((child, i) => {
@@ -379,70 +430,54 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
       const childHeight = resolveSize(child.height, contentHeight);
       
       let childX = contentX;
-      if (alignItems === 'center') {
-        childX = contentX + (contentWidth - childWidth) / 2;
-      } else if (alignItems === 'end') {
-        childX = contentX + contentWidth - childWidth;
-      }
+      if (alignItems === 'center') childX = contentX + (contentWidth - childWidth) / 2;
+      else if (alignItems === 'end') childX = contentX + contentWidth - childWidth;
       
-      child.x = childX - parentX;
-      child.y = currentY - parentY;
       renderNode(ctx, child, childX, currentY, childWidth, childHeight);
-      
       currentY += childHeight + gap;
     });
   }
 }
 
-// 渲染整个文档
+// 渲染文档
 function renderDocument(doc) {
-  // 清空画布
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // 解析变量
   resolveVariables(doc);
   
-  // 渲染根节点
   if (doc.children && doc.children.length > 0) {
     doc.children.forEach(child => {
-      const width = resolveSize(child.width, canvas.width);
-      const height = resolveSize(child.height, canvas.height);
+      let width = resolveSize(child.width, canvas.width);
+      let height = resolveSize(child.height, canvas.height);
+      
+      // 如果没有指定尺寸，使用画布大小
+      if (!child.width) width = canvas.width;
+      if (!child.height) height = canvas.height;
+      
       renderNode(ctx, child, child.x || 0, child.y || 0, width, height);
     });
   }
-  
-  console.log('Rendered', doc.children?.length || 0, 'root nodes');
 }
 
-// 缩放功能
-let currentZoom = 100;
-let penDocument = null;
-
-function setZoom(value) {
-  currentZoom = parseInt(value);
-  document.getElementById('zoomValue').textContent = currentZoom + '%';
-  const container = document.getElementById('canvas-container');
-  container.style.transform = `scale(${currentZoom / 100})`;
-  container.style.transformOrigin = 'top left';
-}
-
-// 加载并渲染文档
+// 加载并渲染
 function loadAndRender(doc) {
   penDocument = doc;
-  
-  // 根据文档调整画布大小
-  if (doc.children && doc.children[0]) {
-    const root = doc.children[0];
-    const width = root.width || 800;
-    const height = root.height || 600;
-    canvas.width = typeof width === 'number' ? width : 800;
-    canvas.height = typeof height === 'number' ? height : 600;
-  }
-  
   renderDocument(doc);
 }
 
-// 加载示例文件
+// 缩放
+function setZoom(value) {
+  currentZoom = parseInt(value);
+  document.getElementById('zoomValue').textContent = currentZoom + '%';
+  canvas.style.transform = `scale(${currentZoom / 100})`;
+  canvas.style.transformOrigin = 'top left';
+}
+
+// 切换面板
+function togglePanel() {
+  document.body.classList.toggle('panel-hidden');
+}
+
+// 加载示例
 async function loadSample() {
   try {
     const response = await fetch('sample.pen');
@@ -451,11 +486,11 @@ async function loadSample() {
     loadAndRender(doc);
   } catch (err) {
     console.error('Failed to load sample.pen:', err);
-    alert('Failed to load sample.pen. Make sure the file exists.');
+    alert('Failed to load sample.pen');
   }
 }
 
-// 下载画布
+// 下载
 function downloadCanvas() {
   const link = document.createElement('a');
   link.download = 'pen-render.png';
@@ -463,7 +498,7 @@ function downloadCanvas() {
   link.click();
 }
 
-// 拖放支持
+// 拖放
 function setupDragDrop() {
   const overlay = document.getElementById('drag-overlay');
   
@@ -473,14 +508,10 @@ function setupDragDrop() {
   });
   
   overlay.addEventListener('dragleave', (e) => {
-    if (e.target === overlay) {
-      overlay.classList.remove('active');
-    }
+    if (e.target === overlay) overlay.classList.remove('active');
   });
   
-  overlay.addEventListener('dragover', (e) => {
-    e.preventDefault();
-  });
+  overlay.addEventListener('dragover', (e) => e.preventDefault());
   
   overlay.addEventListener('drop', (e) => {
     e.preventDefault();
@@ -509,15 +540,12 @@ function setupDragDrop() {
 
 // 初始化
 window.onload = () => {
+  resizeCanvas();
   setupDragDrop();
   loadSample();
 };
+
+window.onresize = resizeCanvas;
 </script>
-
-<!-- 拖放覆盖层 -->
-<div id="drag-overlay" class="drag-overlay">
-  <p>Drop .pen file here</p>
-</div>
-
 </body>
 </html>
