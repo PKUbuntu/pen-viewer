@@ -4,7 +4,91 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>.pen Viewer</title>
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: "hsl(var(--border))",
+            input: "hsl(var(--input))",
+            ring: "hsl(var(--ring))",
+            background: "hsl(var(--background))",
+            foreground: "hsl(var(--foreground))",
+            primary: {
+              DEFAULT: "hsl(var(--primary))",
+              foreground: "hsl(var(--primary-foreground))",
+            },
+            secondary: {
+              DEFAULT: "hsl(var(--secondary))",
+              foreground: "hsl(var(--secondary-foreground))",
+            },
+            destructive: {
+              DEFAULT: "hsl(var(--destructive))",
+              foreground: "hsl(var(--destructive-foreground))",
+            },
+            muted: {
+              DEFAULT: "hsl(var(--muted))",
+              foreground: "hsl(var(--muted-foreground))",
+            },
+            accent: {
+              DEFAULT: "hsl(var(--accent))",
+              foreground: "hsl(var(--accent-foreground))",
+            },
+            card: {
+              DEFAULT: "hsl(var(--card))",
+              foreground: "hsl(var(--card-foreground))",
+            },
+          },
+        },
+      },
+    }
+  </script>
   <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 240 10% 3.9%;
+      --primary: 240 5.9% 10%;
+      --primary-foreground: 0 0% 98%;
+      --secondary: 240 4.8% 95.9%;
+      --secondary-foreground: 240 5.9% 10%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --accent: 240 4.8% 95.9%;
+      --accent-foreground: 240 5.9% 10%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 240 5.9% 90%;
+      --input: 240 5.9% 90%;
+      --ring: 240 5.9% 10%;
+    }
+    .dark {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 3.9%;
+      --card-foreground: 0 0% 98%;
+      --primary: 0 0% 98%;
+      --primary-foreground: 240 5.9% 10%;
+      --secondary: 240 3.7% 15.9%;
+      --secondary-foreground: 0 0% 98%;
+      --muted: 240 3.7% 15.9%;
+      --muted-foreground: 240 5% 64.9%;
+      --accent: 240 3.7% 15.9%;
+      --accent-foreground: 0 0% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 240 3.7% 15.9%;
+      --input: 240 3.7% 15.9%;
+      --ring: 240 4.9% 83.9%;
+    }
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%;
@@ -16,7 +100,6 @@
       background: #0f172a;
     }
     
-    /* 全屏画布 */
     #canvas {
       position: fixed;
       top: 0;
@@ -26,7 +109,6 @@
       display: block;
     }
     
-    /* 浮动控制面板 */
     .control-panel {
       position: fixed;
       top: 16px;
@@ -95,10 +177,7 @@
       font-size: 13px;
     }
     
-    #zoomSlider {
-      width: 80px;
-      cursor: pointer;
-    }
+    #zoomSlider { width: 80px; cursor: pointer; }
     
     .info {
       color: #64748b;
@@ -107,57 +186,19 @@
       padding-top: 12px;
     }
     
-    /* 拖放覆盖 */
-    .drag-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(59, 130, 246, 0.95);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .drag-overlay.active {
-      display: flex;
-    }
-    .drag-overlay p {
-      color: white;
-      font-size: 32px;
-      font-weight: bold;
-    }
-    
-    /* 隐藏面板按钮 */
-    .toggle-panel {
-      position: fixed;
-      top: 16px;
-      left: 16px;
-      z-index: 99;
-      display: none;
-    }
-    .panel-hidden .control-panel {
-      display: none;
-    }
-    .panel-hidden .toggle-panel {
-      display: block;
-    }
-    
-    /* 组件面板 */
     .components-panel {
       position: fixed;
       top: 16px;
       right: 16px;
-      background: rgba(15, 23, 42, 0.9);
+      width: 320px;
+      max-height: 80vh;
+      background: rgba(15, 23, 42, 0.95);
       backdrop-filter: blur(12px);
       border-radius: 12px;
       padding: 16px;
       z-index: 100;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       border: 1px solid rgba(255,255,255,0.1);
-      max-width: 280px;
-      max-height: 70vh;
       overflow-y: auto;
     }
     
@@ -168,117 +209,217 @@
       margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-    
-    .components-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .component-category {
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      padding-bottom: 8px;
-    }
-    
-    .category-header {
-      display: flex;
-      align-items: center;
       justify-content: space-between;
-      padding: 8px 4px;
-      color: #fff;
-      font-size: 13px;
+    }
+    
+    .category-section {
+      margin-bottom: 16px;
+    }
+    
+    .category-title {
+      color: #94a3b8;
+      font-size: 12px;
       font-weight: 600;
-      cursor: pointer;
-      user-select: none;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     
-    .category-header:hover {
-      color: #3b82f6;
-    }
-    
-    .category-header .count {
-      font-size: 11px;
-      color: #64748b;
-      background: rgba(255,255,255,0.1);
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-    
-    .category-items {
+    .component-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-      padding: 4px;
+      gap: 8px;
     }
     
-    .component-item {
-      padding: 6px;
-      background: rgba(255,255,255,0.03);
-      border-radius: 6px;
+    .component-preview {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      color: #94a3b8;
-      font-size: 11px;
       transition: all 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      border: 1px solid transparent;
+      border: 2px solid transparent;
     }
     
-    .component-item:hover {
-      background: rgba(59, 130, 246, 0.15);
-      border-color: rgba(59, 130, 246, 0.3);
+    .component-preview:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
     }
     
-    .component-item.active {
-      background: rgba(59, 130, 246, 0.2);
-      border-color: rgba(59, 130, 246, 0.5);
-      color: #fff;
+    .component-preview.active {
+      border-color: #3b82f6;
+      box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4);
     }
     
-    .component-item .comp-thumbnail {
-      width: 60px;
-      height: 40px;
-      background: #ffffff;
-      border-radius: 4px;
-      border: 1px solid rgba(0,0,0,0.1);
+    .component-preview.dark {
+      background: #1e293b;
     }
     
-    .component-item .comp-info {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      width: 100%;
+    .component-label {
+      font-size: 10px;
+      color: #64748b;
       text-align: center;
+      margin-top: 4px;
     }
     
-    .component-item .comp-name {
-      font-weight: 500;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-    
-    .component-item .comp-variant {
-      font-size: 9px;
-      color: #64748b;
-    }
-    
-    .component-item.active .comp-variant {
-      color: #93c5fd;
-    }
-    
-    .no-components {
-      color: #64748b;
+    /* shadcn-style components for preview */
+    .preview-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
       font-size: 12px;
-      text-align: center;
-      padding: 20px;
+      font-weight: 500;
+      padding: 6px 12px;
+      height: 28px;
+      cursor: pointer;
+    }
+    .preview-btn-primary {
+      background: #18181b;
+      color: #fff;
+    }
+    .preview-btn-secondary {
+      background: #f4f4f5;
+      color: #18181b;
+    }
+    .preview-btn-destructive {
+      background: #ef4444;
+      color: #fff;
+    }
+    .preview-btn-outline {
+      border: 1px solid #e4e4e7;
+      background: transparent;
+    }
+    .preview-btn-ghost {
+      background: transparent;
+    }
+    
+    .preview-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .preview-badge-default { background: #18181b; color: #fff; }
+    .preview-badge-secondary { background: #f4f4f5; color: #18181b; }
+    .preview-badge-destructive { background: #ef4444; color: #fff; }
+    .preview-badge-outline { border: 1px solid #e4e4e7; }
+    
+    .preview-input {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #e4e4e7;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+    }
+    .preview-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    
+    .preview-checkbox {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #e4e4e7;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .preview-checkbox.checked {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+    
+    .preview-switch {
+      width: 36px;
+      height: 20px;
+      background: #e4e4e7;
+      border-radius: 9999px;
+      position: relative;
+      cursor: pointer;
+    }
+    .preview-switch.checked {
+      background: #3b82f6;
+    }
+    .preview-switch::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+    }
+    .preview-switch.checked::after {
+      transform: translateX(16px);
+    }
+    
+    .preview-card {
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      padding: 8px;
+      width: 100%;
+    }
+    
+    .preview-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f4f4f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #64748b;
+    }
+    
+    .preview-progress {
+      width: 100%;
+      height: 8px;
+      background: #f4f4f5;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .preview-progress-bar {
+      height: 100%;
+      background: #3b82f6;
+      width: 60%;
+    }
+    
+    .preview-alert {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 6px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+    
+    .preview-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #e4e4e7;
+    }
+    .preview-tab {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+    .preview-tab.active {
+      border-bottom-color: #3b82f6;
+      color: #3b82f6;
     }
     
     .toggle-components {
@@ -288,14 +429,8 @@
       z-index: 99;
       display: none;
     }
-    
-    .components-hidden .components-panel {
-      display: none;
-    }
-    
-    .components-hidden .toggle-components {
-      display: block;
-    }
+    .components-hidden .components-panel { display: none; }
+    .components-hidden .toggle-components { display: block; }
   </style>
 </head>
 <body>
@@ -306,521 +441,103 @@
       <div class="logo">P</div>
       <span>.pen Viewer</span>
     </div>
-    
     <div class="panel-row">
       <button onclick="loadSample()">Reload</button>
-      <button class="secondary" onclick="resetView()">Reset View</button>
-      <button class="secondary" onclick="downloadCanvas()">⬇ PNG</button>
+      <button class="secondary" onclick="resetView()">Reset</button>
+      <button class="secondary" onclick="toggleTheme()">🌙</button>
+      <button class="secondary" onclick="downloadCanvas()">⬇</button>
     </div>
-    
-    <div class="panel-row">
-      <button id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
-    </div>
-    
     <div class="zoom-control">
       <span>Zoom:</span>
       <input type="range" id="zoomSlider" min="25" max="400" value="100" onchange="setZoom(this.value)">
       <span id="zoomValue">100%</span>
     </div>
-    
     <div class="info">
       Canvas: <span id="canvasSize">-</span><br>
-      🖱️ Drag to pan | Scroll to zoom<br>
-      Drop .pen file to view
+      🖱️ Drag to pan | Scroll to zoom
     </div>
   </div>
   
-  <button class="toggle-panel secondary" onclick="togglePanel()">☰</button>
-  
-  <div class="components-panel">
-    <h3>📦 Components <span id="componentCount">(0)</span></h3>
-    <div id="componentsList" class="components-list">
-      <div class="no-components">Load a .pen file to see components</div>
-    </div>
+  <div class="components-panel" id="componentsPanel">
+    <!-- React will render here -->
   </div>
   
   <button class="toggle-components secondary" onclick="toggleComponents()">📦</button>
-  
-  <div id="drag-overlay" class="drag-overlay">
-    <p>Drop .pen file here</p>
-  </div>
+  <div id="drag-overlay" class="drag-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(59,130,246,0.95);z-index:1000;justify-content:center;align-items:center;"><p style="color:white;font-size:24px;">Drop .pen file here</p></div>
 
 <script>
-// ====== Pen Renderer ======
-
+// ====== Main Canvas Renderer ======
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// 变量存储
 let variables = {};
-let rawVariables = {};  // 原始变量定义（含主题信息）
+let rawVariables = {};
 let currentTheme = { Mode: 'Light', Base: 'Neutral', Accent: 'Default' };
 let currentZoom = 100;
 let penDocument = null;
-
-// 拖拽平移状态
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
 let panX = 0;
 let panY = 0;
-
-// 组件列表
 let components = [];
 let activeComponentId = null;
 
-// 提取组件
-function extractComponents(node, parentX = 0, parentY = 0, result = []) {
-  const x = parentX + (node.x || 0);
-  const y = parentY + (node.y || 0);
-  let width = node.width;
-  let height = node.height;
-  
-  // 处理非数值类型的尺寸
-  if (typeof width !== 'number' || width <= 0) width = 100;
-  if (typeof height !== 'number' || height <= 0) height = 100;
-  
-  // 如果有名字且是 frame/rectangle/ellipse/text，加入列表
-  if (node.name && node.id && node.type && ['frame', 'rectangle', 'ellipse', 'text'].includes(node.type)) {
-    // 跳过太小的元素和通用名称
-    const skipNames = ['Frame', 'Rectangle', 'Ellipse', 'Text', 'Group', 'Vector', 'Line', 'Circle'];
-    if (!skipNames.includes(node.name)) {
-      result.push({
-        id: node.id,
-        name: node.name,
-        type: node.type,
-        reusable: node.reusable || false,
-        x: x,
-        y: y,
-        width: width,
-        height: height
-      });
-    }
-  }
-  
-  // 递归子元素
-  if (node.children && Array.isArray(node.children)) {
-    node.children.forEach(child => {
-      extractComponents(child, x, y, result);
-    });
-  }
-  
-  return result;
-}
-
-// 构建组件列表 UI（带缩略图）
-function buildComponentsList() {
-  const listEl = document.getElementById('componentsList');
-  const countEl = document.getElementById('componentCount');
-  
-  // 只显示可复用组件
-  const reusableComponents = components.filter(c => c.reusable);
-  countEl.textContent = `(${reusableComponents.length})`;
-  
-  if (reusableComponents.length === 0) {
-    listEl.innerHTML = '<div class="no-components">No reusable components found</div>';
-    return;
-  }
-  
-  // 按 shadcn 分类
-  const categories = {
-    'Form': { icon: '📝', items: [] },
-    'Data Display': { icon: '📊', items: [] },
-    'Disclosure': { icon: '📂', items: [] },
-    'Feedback': { icon: '💬', items: [] },
-    'Navigation': { icon: '🧭', items: [] },
-    'Overlay': { icon: '🔲', items: [] },
-    'Other': { icon: '📦', items: [] }
-  };
-  
-  // 组件名到分类的映射
-  const componentCategory = {
-    'Button': 'Form', 'Icon Button': 'Form', 'Input': 'Form', 'Input Group': 'Form',
-    'Select': 'Form', 'Textarea': 'Form', 'Checkbox': 'Form', 'Radio': 'Form',
-    'Switch': 'Form', 'Combobox': 'Form', 'Input OTP': 'Form', 'Input OTP Group': 'Form',
-    'Avatar': 'Data Display', 'Badge': 'Data Display', 'Card': 'Data Display',
-    'Table': 'Data Display', 'Data Table': 'Data Display',
-    'Accordion': 'Disclosure', 'Tabs': 'Disclosure',
-    'Alert': 'Feedback', 'Progress': 'Feedback',
-    'Sidebar': 'Navigation', 'Breadcrumb': 'Navigation', 'Pagination': 'Navigation',
-    'Dialog': 'Overlay', 'Dropdown': 'Overlay', 'Modal': 'Overlay', 'Tooltip': 'Overlay',
-    'List': 'Data Display'
-  };
-  
-  // 分类组件
-  reusableComponents.forEach(comp => {
-    const baseName = comp.name.split('/')[0];
-    const category = componentCategory[baseName] || 'Other';
-    categories[category].items.push(comp);
-  });
-  
-  // 构建HTML
-  let html = '';
-  const categoryOrder = ['Form', 'Data Display', 'Disclosure', 'Feedback', 'Navigation', 'Overlay', 'Other'];
-  
-  categoryOrder.forEach(cat => {
-    const items = categories[cat].items;
-    if (items.length === 0) return;
-    
-    html += `<div class="component-category">
-      <div class="category-header" onclick="toggleCategory('${cat}')">
-        <span>${categories[cat].icon} ${cat}</span>
-        <span class="count">${items.length}</span>
-      </div>
-      <div class="category-items" id="cat-${cat}">`;
-    
-    items.forEach(comp => {
-      const parts = comp.name.split('/');
-      const baseName = parts[0];
-      const variant = parts.length > 1 ? parts.slice(1).join('/') : '';
-      
-      html += `<div class="component-item ${activeComponentId === comp.id ? 'active' : ''}" 
-                    onclick="focusComponent('${comp.id}')" 
-                    data-component-id="${comp.id}"
-                    title="${comp.name}">
-        <canvas class="comp-thumbnail" id="thumb-${comp.id}" width="60" height="40"></canvas>
-        <div class="comp-info">
-          <span class="comp-name">${baseName}</span>
-          ${variant ? `<span class="comp-variant">${variant}</span>` : ''}
-        </div>
-      </div>`;
-    });
-    
-    html += '</div></div>';
-  });
-  
-  listEl.innerHTML = html;
-  
-  // 异步渲染缩略图
-  requestAnimationFrame(() => {
-    reusableComponents.forEach(comp => {
-      renderComponentThumbnail(comp.id);
-    });
-  });
-}
-
-// 渲染组件缩略图
-function renderComponentThumbnail(componentId) {
-  const thumbCanvas = document.getElementById('thumb-' + componentId);
-  if (!thumbCanvas) return;
-  
-  const comp = components.find(c => c.id === componentId);
-  if (!comp || !penDocument) return;
-  
-  const thumbCtx = thumbCanvas.getContext('2d');
-  
-  // 清空缩略图
-  thumbCtx.clearRect(0, 0, 60, 40);
-  
-  // 找到组件节点
-  const node = findNodeById(penDocument, componentId);
-  if (!node) return;
-  
-  // 计算缩放
-  const nodeWidth = comp.width || 100;
-  const nodeHeight = comp.height || 40;
-  const scale = Math.min(60 / nodeWidth, 40 / nodeHeight) * 0.9;
-  
-  // 居中偏移
-  const offsetX = (60 - nodeWidth * scale) / 2;
-  const offsetY = (40 - nodeHeight * scale) / 2;
-  
-  // 渲染节点到缩略图
-  thumbCtx.save();
-  thumbCtx.translate(offsetX, offsetY);
-  thumbCtx.scale(scale, scale);
-  
-  // 简化渲染（只绘制背景和边框）
-  renderNodeThumbnail(thumbCtx, node, 0, 0, nodeWidth, nodeHeight);
-  
-  thumbCtx.restore();
-}
-
-// 查找节点
-function findNodeById(doc, id, node = null) {
-  if (node === null) {
-    if (doc.children) {
-      for (const child of doc.children) {
-        const found = findNodeById(doc, id, child);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-  
-  if (node.id === id) return node;
-  
-  if (node.children && Array.isArray(node.children)) {
-    for (const child of node.children) {
-      const found = findNodeById(null, id, child);
-      if (found) return found;
-    }
-  }
-  
-  return null;
-}
-
-// 渲染节点缩略图（简化版）
-function renderNodeThumbnail(ctx, node, x, y, width, height) {
-  if (!width || !height) return;
-  
-  const fillColor = resolveColor(node.fill);
-  const strokeColor = node.stroke ? resolveColor(node.stroke.fill) : null;
-  const cornerRadius = node.cornerRadius || 0;
-  
-  // 绘制填充
-  if (fillColor) {
-    ctx.fillStyle = fillColor;
-    if (cornerRadius > 0) {
-      drawRoundedRect(ctx, x, y, width, height, Math.min(cornerRadius, width/2, height/2));
-      ctx.fill();
-    } else {
-      ctx.fillRect(x, y, width, height);
-    }
-  }
-  
-  // 绘制边框
-  if (strokeColor) {
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 1;
-    if (cornerRadius > 0) {
-      drawRoundedRect(ctx, x, y, width, height, Math.min(cornerRadius, width/2, height/2));
-      ctx.stroke();
-    } else {
-      ctx.strokeRect(x, y, width, height);
-    }
-  }
-  
-  // 渲染文本
-  if (node.type === 'text' && node.content) {
-    const textColor = resolveColor(node.fill) || '#333';
-    ctx.fillStyle = textColor;
-    ctx.font = `${Math.min(node.fontSize || 12, 14)}px -apple-system, sans-serif`;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(node.content.substring(0, 10), x + 4, y + height/2);
-  }
-  
-  // 递归渲染子元素
-  if (node.children && Array.isArray(node.children)) {
-    let childX = x + (node.padding || 0);
-    let childY = y + (node.padding || 0);
-    
-    node.children.forEach(child => {
-      const cw = typeof child.width === 'number' ? child.width : width - (node.padding || 0) * 2;
-      const ch = typeof child.height === 'number' ? child.height : 20;
-      
-      renderNodeThumbnail(ctx, child, childX + (child.x || 0), childY + (child.y || 0), cw, ch);
-      
-      if (node.layout === 'horizontal') {
-        childX += cw + (node.gap || 0);
-      } else if (node.layout === 'vertical') {
-        childY += ch + (node.gap || 0);
-      }
-    });
-  }
-}
-
-// 切换分类展开/收起
-function toggleCategory(cat) {
-  const el = document.getElementById('cat-' + cat);
-  if (el) {
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
-  }
-}
-
-// 定位到组件
-function focusComponent(id) {
-  const comp = components.find(c => c.id === id);
-  if (!comp) return;
-  
-  activeComponentId = id;
-  buildComponentsList();
-  
-  // 获取当前缩放比例（需要与 renderDocument 中的计算一致）
-  let minX = 0, minY = 0, maxWidth = canvas.width, maxHeight = canvas.height;
-  if (penDocument && penDocument.children) {
-    penDocument.children.forEach(child => {
-      if (child.x && child.x < minX) minX = child.x;
-      if (child.y && child.y < minY) minY = child.y;
-      if (child.width && typeof child.width === 'number' && child.width > maxWidth) maxWidth = child.width;
-      if (child.height && typeof child.height === 'number' && child.height > maxHeight) maxHeight = child.height;
-    });
-  }
-  
-  const baseScale = currentZoom / 100;
-  const scaleX = canvas.width / maxWidth;
-  const scaleY = canvas.height / maxHeight;
-  const fitScale = Math.min(scaleX, scaleY, 1);
-  const scale = fitScale * baseScale;
-  
-  // 计算偏移（与 renderDocument 一致）
-  const offsetX = minX < 0 ? -minX : 0;
-  const offsetY = minY < 0 ? -minY : 0;
-  
-  // 计算组件在屏幕上的位置
-  const screenX = (comp.x + offsetX) * scale + panX;
-  const screenY = (comp.y + offsetY) * scale + panY;
-  const screenW = comp.width * scale;
-  const screenH = comp.height * scale;
-  
-  // 判断组件是否在可视区域内（带边距）
-  const margin = 50;
-  const isVisible = 
-    screenX >= margin && 
-    screenX + screenW <= canvas.width - margin &&
-    screenY >= margin && 
-    screenY + screenH <= canvas.height - margin;
-  
-  if (isVisible) {
-    // 已在可视区域内，不移动，只重新渲染（显示高亮）
-    renderDocument(penDocument);
-    return;
-  }
-  
-  // 不在可视区域，计算居中位置
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  
-  // 计算新的 pan 值，使组件居中
-  panX = centerX - (comp.x + offsetX + comp.width / 2) * scale;
-  panY = centerY - (comp.y + offsetY + comp.height / 2) * scale;
-  
-  // 重新渲染
-  renderDocument(penDocument);
-}
-
-// 切换组件面板
-function toggleComponents() {
-  document.body.classList.toggle('components-hidden');
-}
-
-// 初始化画布大小
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   document.getElementById('canvasSize').textContent = `${canvas.width} x ${canvas.height}`;
-  if (penDocument) {
-    renderDocument(penDocument);
-  }
+  if (penDocument) renderDocument(penDocument);
 }
 
-// 解析变量
 function resolveVariables(doc) {
   variables = {};
   rawVariables = {};
-  
-  // 从文档获取根节点的主题设置
   if (doc.children && doc.children[0] && doc.children[0].theme) {
     currentTheme = { ...currentTheme, ...doc.children[0].theme };
   }
-  
-  // 保存原始变量定义
-  if (doc.variables) {
-    rawVariables = doc.variables;
-  }
-  
-  // 解析每个变量，根据主题选择值
+  if (doc.variables) rawVariables = doc.variables;
   for (const [key, varDef] of Object.entries(rawVariables)) {
-    if (!varDef || !varDef.value) {
-      variables[key] = null;
-      continue;
-    }
-    
-    // value 可能是数组（多主题）或单个值
+    if (!varDef || !varDef.value) { variables[key] = null; continue; }
     const values = Array.isArray(varDef.value) ? varDef.value : [{ value: varDef.value }];
-    
-    // 找到匹配当前主题的值
-    let matchedValue = null;
-    let defaultFallback = null;
-    
+    let matchedValue = null, defaultFallback = null;
     for (const item of values) {
-      const itemValue = item.value;
-      const itemTheme = item.theme;
-      
-      // 记录默认值（无主题条件的第一个）
-      if (!itemTheme && !defaultFallback) {
-        defaultFallback = itemValue;
-      }
-      
-      // 检查主题匹配
-      if (itemTheme) {
+      if (!item.theme && !defaultFallback) defaultFallback = item.value;
+      if (item.theme) {
         let matches = true;
-        for (const [themeKey, themeVal] of Object.entries(itemTheme)) {
-          if (currentTheme[themeKey] !== themeVal) {
-            matches = false;
-            break;
-          }
+        for (const [tk, tv] of Object.entries(item.theme)) {
+          if (currentTheme[tk] !== tv) { matches = false; break; }
         }
-        if (matches) {
-          matchedValue = itemValue;
-          break;  // 找到匹配，停止
-        }
+        if (matches) { matchedValue = item.value; break; }
       }
     }
-    
-    // 使用匹配值或默认值
     variables[key] = matchedValue || defaultFallback;
   }
-  
-  console.log('Theme:', currentTheme, 'Variables loaded:', Object.keys(variables).length);
 }
 
-// 切换主题
-function toggleTheme() {
-  currentTheme.Mode = currentTheme.Mode === 'Light' ? 'Dark' : 'Light';
-  resolveVariables(penDocument);
-  renderDocument(penDocument);
-  
-  // 更新按钮文字
-  const btn = document.getElementById('themeBtn');
-  if (btn) {
-    btn.textContent = currentTheme.Mode === 'Light' ? '🌙 Dark' : '☀️ Light';
-  }
-}
-
-// 解析颜色值
 function resolveColor(color) {
   if (!color) return null;
   if (typeof color === 'string') {
-    if (color.startsWith('$')) {
-      return variables[color.slice(1)] || '#888888';
-    }
+    if (color.startsWith('$')) return variables[color.slice(1)] || '#888';
     return color;
   }
-  if (color.type === 'gradient') {
-    return color.colors?.[0]?.color || '#888';
-  }
-  return color;
+  return color.colors?.[0]?.color || '#888';
 }
 
-// 解析描边粗细
-function resolveStrokeThickness(thickness) {
-  if (thickness === undefined || thickness === null) return 1;
-  if (typeof thickness === 'number') return thickness;
-  if (typeof thickness === 'object') {
-    // 处理 { top, right, bottom, left } 或 { right: 1 } 格式
-    const max = Math.max(
-      thickness.top || 0,
-      thickness.right || 0,
-      thickness.bottom || 0,
-      thickness.left || 0
-    );
-    return max || 1;
-  }
-  return 1;
-}
-
-// 解析尺寸值
 function resolveSize(val, parentSize = 0) {
   if (val === 'fill_container') return parentSize;
   if (val === 'fit_content') return null;
-  if (typeof val === 'string' && val.startsWith('$')) {
-    return variables[val.slice(1)] || 0;
-  }
+  if (typeof val === 'string' && val.startsWith('$')) return variables[val.slice(1)] || 0;
   return val || 0;
 }
 
-// 绘制圆角矩形
+function resolveStrokeThickness(thickness) {
+  if (thickness === undefined || thickness === null) return 1;
+  if (typeof thickness === 'number') return thickness;
+  if (typeof thickness === 'object') return Math.max(thickness.top || 0, thickness.right || 0, thickness.bottom || 0, thickness.left || 0) || 1;
+  return 1;
+}
+
 function drawRoundedRect(ctx, x, y, width, height, radius) {
   if (width <= 0 || height <= 0) return;
   radius = Math.min(radius || 0, width / 2, height / 2);
@@ -837,406 +554,251 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
-// 渲染节点
 function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parentHeight = 0) {
   const x = parentX + (node.x || 0);
   const y = parentY + (node.y || 0);
   const width = resolveSize(node.width, parentWidth);
   const height = resolveSize(node.height, parentHeight);
-  
   if (width <= 0 || height <= 0) return;
-  
   ctx.save();
+  if (node.opacity !== undefined) ctx.globalAlpha = node.opacity;
   
-  if (node.opacity !== undefined) {
-    ctx.globalAlpha = node.opacity;
-  }
-  
-  switch (node.type) {
-    case 'frame':
-    case 'rectangle':
-      renderFrameOrRect(ctx, node, x, y, width, height);
-      break;
-    case 'ellipse':
-      renderEllipse(ctx, node, x, y, width, height);
-      break;
-    case 'text':
-      renderText(ctx, node, x, y, width, height);
-      break;
-    case 'line':
-      renderLine(ctx, node, x, y, width, height);
-      break;
-  }
-  
-  ctx.restore();
-  
-  if (node.children && node.children.length > 0) {
-    renderChildren(ctx, node, x, y, width, height);
-  }
-}
-
-function renderFrameOrRect(ctx, node, x, y, width, height) {
-  if (node.effect && node.effect.type === 'shadow') {
-    const shadow = node.effect;
-    ctx.shadowColor = resolveColor(shadow.color) || 'rgba(0,0,0,0.1)';
-    ctx.shadowBlur = shadow.blur || 0;
-    ctx.shadowOffsetX = shadow.offset?.x || 0;
-    ctx.shadowOffsetY = shadow.offset?.y || 0;
-  }
-  
-  const fillColor = resolveColor(node.fill);
-  if (fillColor) {
-    drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
-    ctx.fillStyle = fillColor;
-    ctx.fill();
-  }
-  
-  ctx.shadowColor = 'transparent';
-  
-  if (node.stroke && node.stroke.fill) {
-    const strokeColor = resolveColor(node.stroke.fill);
-    if (strokeColor) {
+  if (node.type === 'frame' || node.type === 'rectangle') {
+    if (node.effect && node.effect.type === 'shadow') {
+      ctx.shadowColor = resolveColor(node.effect.color) || 'rgba(0,0,0,0.1)';
+      ctx.shadowBlur = node.effect.blur || 0;
+      ctx.shadowOffsetX = node.effect.offset?.x || 0;
+      ctx.shadowOffsetY = node.effect.offset?.y || 0;
+    }
+    const fillColor = resolveColor(node.fill);
+    if (fillColor) {
       drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = resolveStrokeThickness(node.stroke.thickness);
-      ctx.stroke();
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+    ctx.shadowColor = 'transparent';
+    if (node.stroke && node.stroke.fill) {
+      const strokeColor = resolveColor(node.stroke.fill);
+      if (strokeColor) {
+        drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = resolveStrokeThickness(node.stroke.thickness);
+        ctx.stroke();
+      }
+    }
+  } else if (node.type === 'ellipse') {
+    const fillColor = resolveColor(node.fill);
+    if (fillColor) {
+      ctx.beginPath();
+      ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+  } else if (node.type === 'text') {
+    const fillColor = resolveColor(node.fill);
+    if (fillColor) {
+      ctx.fillStyle = fillColor;
+      ctx.font = `${node.fontWeight || 'normal'} ${node.fontSize || 16}px -apple-system, sans-serif`;
+      ctx.textAlign = node.textAlign || 'left';
+      ctx.textBaseline = node.textAlignVertical === 'middle' ? 'middle' : 'top';
+      ctx.fillText(node.content || '', node.textAlign === 'center' ? x + (width || 0) / 2 : x, node.textAlignVertical === 'middle' ? y + (height || 0) / 2 : y);
     }
   }
-}
-
-function renderEllipse(ctx, node, x, y, width, height) {
-  const fillColor = resolveColor(node.fill);
-  if (fillColor) {
-    ctx.beginPath();
-    ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
-    ctx.fillStyle = fillColor;
-    ctx.fill();
-  }
-}
-
-function renderText(ctx, node, x, y, width, height) {
-  const fillColor = resolveColor(node.fill);
-  if (!fillColor) return;
-  
-  ctx.fillStyle = fillColor;
-  ctx.font = `${node.fontWeight || 'normal'} ${node.fontSize || 16}px -apple-system, sans-serif`;
-  ctx.textAlign = node.textAlign || 'left';
-  ctx.textBaseline = node.textAlignVertical === 'middle' ? 'middle' : 'top';
-  
-  const textX = node.textAlign === 'center' ? x + (width || 0) / 2 : x;
-  const textY = node.textAlignVertical === 'middle' ? y + (height || 0) / 2 : y;
-  
-  ctx.fillText(node.content || '', textX, textY);
-}
-
-function renderLine(ctx, node, x, y, width, height) {
-  const strokeColor = resolveColor(node.stroke?.fill || node.fill);
-  if (!strokeColor) return;
-  
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + width, y + height);
-  ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = node.stroke?.thickness || 2;
-  ctx.stroke();
+  ctx.restore();
+  if (node.children && node.children.length > 0) renderChildren(ctx, node, x, y, width, height);
 }
 
 function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight) {
   if (!parent.children || parent.children.length === 0) return;
-  
   const layout = parent.layout || 'none';
   const padding = parent.padding || 0;
   const gap = parent.gap || 0;
   const justifyContent = parent.justifyContent || 'start';
   const alignItems = parent.alignItems || 'start';
-  
   let paddingTop, paddingRight, paddingBottom, paddingLeft;
   if (Array.isArray(padding)) {
-    if (padding.length === 2) {
-      paddingTop = paddingBottom = padding[0];
-      paddingLeft = paddingRight = padding[1];
-    } else if (padding.length === 4) {
-      [paddingTop, paddingRight, paddingBottom, paddingLeft] = padding;
-    }
-  } else {
-    paddingTop = paddingRight = paddingBottom = paddingLeft = padding;
-  }
-  
+    if (padding.length === 2) { paddingTop = paddingBottom = padding[0]; paddingLeft = paddingRight = padding[1]; }
+    else if (padding.length === 4) [paddingTop, paddingRight, paddingBottom, paddingLeft] = padding;
+  } else { paddingTop = paddingRight = paddingBottom = paddingLeft = padding; }
   const contentX = parentX + paddingLeft;
   const contentY = parentY + paddingTop;
   const contentWidth = parentWidth - paddingLeft - paddingRight;
   const contentHeight = parentHeight - paddingTop - paddingBottom;
   
   if (layout === 'none') {
-    parent.children.forEach(child => {
-      renderNode(ctx, child, parentX, parentY, parentWidth, parentHeight);
-    });
+    parent.children.forEach(child => renderNode(ctx, child, parentX, parentY, parentWidth, parentHeight));
   } else if (layout === 'horizontal') {
     let startX = contentX;
-    const childrenWithWidth = parent.children.map(child => {
-      const w = resolveSize(child.width, contentWidth);
-      return { child, width: w === null ? 0 : w };
-    });
-    
-    let totalWidth = childrenWithWidth.reduce((sum, { width }) => sum + width, 0) + gap * (parent.children.length - 1);
-    
-    if (justifyContent === 'center') {
-      startX = contentX + (contentWidth - totalWidth) / 2;
-    } else if (justifyContent === 'end') {
-      startX = contentX + contentWidth - totalWidth;
-    } else if (justifyContent === 'space_between' && parent.children.length > 1) {
-      const extraSpace = contentWidth - childrenWithWidth.reduce((sum, { width }) => sum + width, 0);
-      const spaceBetween = extraSpace / (parent.children.length - 1);
-      childrenWithWidth.forEach((item, i) => {
-        const childHeight = resolveSize(item.child.height, contentHeight);
-        let childY = contentY;
-        if (alignItems === 'center') childY = contentY + (contentHeight - childHeight) / 2;
-        else if (alignItems === 'end') childY = contentY + contentHeight - childHeight;
-        
-        renderNode(ctx, item.child, startX, childY, item.width, childHeight);
-        startX += item.width + spaceBetween;
-      });
-      return;
-    }
-    
+    const childrenWithWidth = parent.children.map(child => ({ child, width: resolveSize(child.width, contentWidth) || 0 }));
+    if (justifyContent === 'center') startX = contentX + (contentWidth - childrenWithWidth.reduce((s, { width }) => s + width, 0)) / 2;
+    else if (justifyContent === 'end') startX = contentX + contentWidth - childrenWithWidth.reduce((s, { width }) => s + width, 0);
     childrenWithWidth.forEach((item, i) => {
       const childHeight = resolveSize(item.child.height, contentHeight);
       let childY = contentY;
       if (alignItems === 'center') childY = contentY + (contentHeight - childHeight) / 2;
       else if (alignItems === 'end') childY = contentY + contentHeight - childHeight;
-      
       renderNode(ctx, item.child, startX, childY, item.width, childHeight);
       startX += item.width + gap;
     });
-    
   } else if (layout === 'vertical') {
     let currentY = contentY;
-    
-    parent.children.forEach((child, i) => {
+    parent.children.forEach(child => {
       const childWidth = resolveSize(child.width, contentWidth);
       const childHeight = resolveSize(child.height, contentHeight);
-      
       let childX = contentX;
       if (alignItems === 'center') childX = contentX + (contentWidth - childWidth) / 2;
       else if (alignItems === 'end') childX = contentX + contentWidth - childWidth;
-      
       renderNode(ctx, child, childX, currentY, childWidth, childHeight);
       currentY += childHeight + gap;
     });
   }
 }
 
-// 渲染文档
 function renderDocument(doc) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   resolveVariables(doc);
-  
   if (doc.children && doc.children.length > 0) {
-    // 计算所有根节点的边界
     let minX = 0, minY = 0, maxWidth = canvas.width, maxHeight = canvas.height;
-    
     doc.children.forEach(child => {
       if (child.x && child.x < minX) minX = child.x;
       if (child.y && child.y < minY) minY = child.y;
       if (child.width && typeof child.width === 'number' && child.width > maxWidth) maxWidth = child.width;
       if (child.height && typeof child.height === 'number' && child.height > maxHeight) maxHeight = child.height;
     });
-    
-    // 计算缩放比例以适应画布
     const baseScale = currentZoom / 100;
-    const scaleX = canvas.width / maxWidth;
-    const scaleY = canvas.height / maxHeight;
-    const fitScale = Math.min(scaleX, scaleY, 1);
+    const fitScale = Math.min(canvas.width / maxWidth, canvas.height / maxHeight, 1);
     const scale = fitScale * baseScale;
-    
-    // 计算偏移使内容从正确位置开始
     const offsetX = (minX < 0 ? -minX : 0) + panX;
     const offsetY = (minY < 0 ? -minY : 0) + panY;
-    
-    // 应用变换
     ctx.save();
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
-    
     doc.children.forEach(child => {
       let width = resolveSize(child.width, maxWidth);
       let height = resolveSize(child.height, maxHeight);
-      
       if (!child.width) width = maxWidth;
       if (!child.height) height = maxHeight;
-      
       renderNode(ctx, child, child.x || 0, child.y || 0, width, height);
     });
-    
-    // 高亮选中的组件
     if (activeComponentId) {
       const activeComp = components.find(c => c.id === activeComponentId);
       if (activeComp) {
-        // 绘制高亮边框
         ctx.save();
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 3 / scale;
         ctx.setLineDash([8 / scale, 4 / scale]);
-        ctx.strokeRect(
-          activeComp.x - 6 / scale,
-          activeComp.y - 6 / scale,
-          activeComp.width + 12 / scale,
-          activeComp.height + 12 / scale
-        );
+        ctx.strokeRect(activeComp.x - 6, activeComp.y - 6, activeComp.width + 12, activeComp.height + 12);
         ctx.setLineDash([]);
-        
-        // 绘制组件名称标签背景
         const labelHeight = 20 / scale;
-        const labelPadding = 6 / scale;
         ctx.font = `bold ${12 / scale}px -apple-system, sans-serif`;
         const textWidth = ctx.measureText(activeComp.name).width;
-        
         ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(
-          activeComp.x - 6 / scale,
-          activeComp.y - 6 / scale - labelHeight,
-          textWidth + labelPadding * 2,
-          labelHeight
-        );
-        
-        // 绘制标签文字
+        ctx.fillRect(activeComp.x - 6, activeComp.y - 6 - labelHeight, textWidth + 12 / scale, labelHeight);
         ctx.fillStyle = '#ffffff';
         ctx.textBaseline = 'middle';
-        ctx.fillText(activeComp.name, activeComp.x - 6 / scale + labelPadding, activeComp.y - 6 / scale - labelHeight / 2);
+        ctx.fillText(activeComp.name, activeComp.x, activeComp.y - 6 - labelHeight / 2);
         ctx.restore();
       }
     }
-    
     ctx.restore();
   }
 }
 
-// 加载并渲染
+function extractComponents(node, parentX = 0, parentY = 0, result = []) {
+  const x = parentX + (node.x || 0);
+  const y = parentY + (node.y || 0);
+  let width = node.width;
+  let height = node.height;
+  if (typeof width !== 'number' || width <= 0) width = 100;
+  if (typeof height !== 'number' || height <= 0) height = 100;
+  if (node.name && node.id && node.type && ['frame', 'rectangle', 'ellipse', 'text'].includes(node.type)) {
+    const skipNames = ['Frame', 'Rectangle', 'Ellipse', 'Text', 'Group', 'Vector', 'Line', 'Circle'];
+    if (!skipNames.includes(node.name)) {
+      result.push({ id: node.id, name: node.name, type: node.type, reusable: node.reusable || false, x, y, width, height });
+    }
+  }
+  if (node.children && Array.isArray(node.children)) {
+    node.children.forEach(child => extractComponents(child, x, y, result));
+  }
+  return result;
+}
+
 function loadAndRender(doc) {
   penDocument = doc;
-  
-  // 提取组件
   components = [];
-  if (doc.children) {
-    doc.children.forEach(child => {
-      extractComponents(child, 0, 0, components);
-    });
-  }
-  buildComponentsList();
+  if (doc.children) doc.children.forEach(child => extractComponents(child, 0, 0, components));
+  renderReactComponents();
   activeComponentId = null;
-  
-  // 重置视图
-  panX = 0;
-  panY = 0;
-  currentZoom = 100;
+  panX = 0; panY = 0; currentZoom = 100;
   document.getElementById('zoomSlider').value = 100;
   document.getElementById('zoomValue').textContent = '100%';
-  
   renderDocument(doc);
 }
 
-// 缩放
+async function loadSample() {
+  try {
+    const response = await fetch('pencil-new.pen');
+    const doc = JSON.parse(await response.text());
+    loadAndRender(doc);
+  } catch (err) {
+    console.error('Failed:', err);
+  }
+}
+
 function setZoom(value) {
   currentZoom = parseInt(value);
   document.getElementById('zoomValue').textContent = currentZoom + '%';
   if (penDocument) renderDocument(penDocument);
 }
 
-// 重置视图
 function resetView() {
-  panX = 0;
-  panY = 0;
-  currentZoom = 100;
+  panX = 0; panY = 0; currentZoom = 100;
   document.getElementById('zoomSlider').value = 100;
   document.getElementById('zoomValue').textContent = '100%';
   if (penDocument) renderDocument(penDocument);
 }
 
-// 切换面板
-function togglePanel() {
-  document.body.classList.toggle('panel-hidden');
+function toggleTheme() {
+  currentTheme.Mode = currentTheme.Mode === 'Light' ? 'Dark' : 'Light';
+  resolveVariables(penDocument);
+  renderDocument(penDocument);
+  renderReactComponents();
 }
 
-// 设置拖拽
-function setupPan() {
-  canvas.style.cursor = 'grab';
-  
-  canvas.addEventListener('mousedown', (e) => {
-    // 检查是否点击在控制面板或组件面板区域
-    const controlPanel = document.querySelector('.control-panel');
-    const componentsPanel = document.querySelector('.components-panel');
-    
-    if (controlPanel) {
-      const rect = controlPanel.getBoundingClientRect();
-      if (e.clientX >= rect.left && e.clientX <= rect.right && 
-          e.clientY >= rect.top && e.clientY <= rect.bottom) {
-        return; // 点击在控制面板内，不处理拖动
-      }
-    }
-    
-    if (componentsPanel) {
-      const rect = componentsPanel.getBoundingClientRect();
-      if (e.clientX >= rect.left && e.clientX <= rect.right && 
-          e.clientY >= rect.top && e.clientY <= rect.bottom) {
-        return; // 点击在组件面板内，不处理拖动
-      }
-    }
-    
-    isDragging = true;
-    dragStartX = e.clientX - panX;
-    dragStartY = e.clientY - panY;
-    canvas.style.cursor = 'grabbing';
-    e.preventDefault();
-  });
-  
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    panX = e.clientX - dragStartX;
-    panY = e.clientY - dragStartY;
-    if (penDocument) renderDocument(penDocument);
-  });
-  
-  document.addEventListener('mouseup', () => {
-    if (isDragging) {
-      isDragging = false;
-      canvas.style.cursor = 'grab';
-    }
-  });
-  
-  // 滚轮缩放
-  canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -10 : 10;
-    const newZoom = Math.max(25, Math.min(400, currentZoom + delta));
-    currentZoom = newZoom;
-    document.getElementById('zoomSlider').value = newZoom;
-    document.getElementById('zoomValue').textContent = newZoom + '%';
-    if (penDocument) renderDocument(penDocument);
-  }, { passive: false });
+function toggleComponents() {
+  document.body.classList.toggle('components-hidden');
 }
 
-// 加载示例
-async function loadSample() {
-  try {
-    const response = await fetch('pencil-new.pen');
-    const text = await response.text();
-    const doc = JSON.parse(text);
-    loadAndRender(doc);
-  } catch (err) {
-    console.error('Failed to load pencil-new.pen:', err);
-    // Fallback to sample.pen
-    try {
-      const response = await fetch('sample.pen');
-      const text = await response.text();
-      const doc = JSON.parse(text);
-      loadAndRender(doc);
-    } catch (err2) {
-      alert('Failed to load design files');
-    }
+function focusComponent(id) {
+  const comp = components.find(c => c.id === id);
+  if (!comp) return;
+  activeComponentId = id;
+  let minX = 0, minY = 0, maxWidth = canvas.width, maxHeight = canvas.height;
+  if (penDocument && penDocument.children) {
+    penDocument.children.forEach(child => {
+      if (child.x && child.x < minX) minX = child.x;
+      if (child.y && child.y < minY) minY = child.y;
+      if (child.width && typeof child.width === 'number' && child.width > maxWidth) maxWidth = child.width;
+      if (child.height && typeof child.height === 'number' && child.height > maxHeight) maxHeight = child.height;
+    });
   }
+  const scale = Math.min(canvas.width / maxWidth, canvas.height / maxHeight, 1) * (currentZoom / 100);
+  const offsetX = minX < 0 ? -minX : 0;
+  const offsetY = minY < 0 ? -minY : 0;
+  const screenX = (comp.x + offsetX) * scale + panX;
+  const screenY = (comp.y + offsetY) * scale + panY;
+  const screenW = comp.width * scale;
+  const screenH = comp.height * scale;
+  const margin = 50;
+  const isVisible = screenX >= margin && screenX + screenW <= canvas.width - margin && screenY >= margin && screenY + screenH <= canvas.height - margin;
+  if (!isVisible) {
+    panX = canvas.width / 2 - (comp.x + offsetX + comp.width / 2) * scale;
+    panY = canvas.height / 2 - (comp.y + offsetY + comp.height / 2) * scale;
+  }
+  renderDocument(penDocument);
+  renderReactComponents();
 }
 
-// 下载
 function downloadCanvas() {
   const link = document.createElement('a');
   link.download = 'pen-render.png';
@@ -1244,55 +806,145 @@ function downloadCanvas() {
   link.click();
 }
 
-// 拖放
-function setupDragDrop() {
-  const overlay = document.getElementById('drag-overlay');
-  
-  document.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-    overlay.classList.add('active');
+// ====== React Components Panel ======
+const e = React.createElement;
+
+// shadcn-style component previews
+const ComponentPreviews = {
+  'Button/Default': () => e('button', { className: 'preview-btn preview-btn-primary' }, 'Button'),
+  'Button/Secondary': () => e('button', { className: 'preview-btn preview-btn-secondary' }, 'Button'),
+  'Button/Destructive': () => e('button', { className: 'preview-btn preview-btn-destructive' }, 'Button'),
+  'Button/Outline': () => e('button', { className: 'preview-btn preview-btn-outline' }, 'Button'),
+  'Button/Ghost': () => e('button', { className: 'preview-btn preview-btn-ghost' }, 'Button'),
+  'Badge/Default': () => e('span', { className: 'preview-badge preview-badge-default' }, 'Badge'),
+  'Badge/Secondary': () => e('span', { className: 'preview-badge preview-badge-secondary' }, 'Badge'),
+  'Badge/Destructive': () => e('span', { className: 'preview-badge preview-badge-destructive' }, 'Badge'),
+  'Badge/Outline': () => e('span', { className: 'preview-badge preview-badge-outline' }, 'Badge'),
+  'Input/Default': () => e('input', { className: 'preview-input', placeholder: 'Type here...' }),
+  'Checkbox/Checked': () => e('div', { className: 'preview-checkbox checked' }, '✓'),
+  'Switch/Checked': () => e('div', { className: 'preview-switch checked' }),
+  'Switch/Unchecked': () => e('div', { className: 'preview-switch' }),
+  'Radio/Selected': () => e('div', { style: { width: 16, height: 16, borderRadius: '50%', border: '2px solid #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, e('div', { style: { width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' } })),
+  'Radio/Unselected': () => e('div', { style: { width: 16, height: 16, borderRadius: '50%', border: '2px solid #e4e4e7' } }),
+  'Avatar/Text': () => e('div', { className: 'preview-avatar' }, 'JD'),
+  'Card': () => e('div', { className: 'preview-card' }, e('div', { style: { fontSize: 11, fontWeight: 500 } }, 'Card Title'), e('div', { style: { fontSize: 10, color: '#64748b', marginTop: 4 } }, 'Card description')),
+  'Progress': () => e('div', { className: 'preview-progress' }, e('div', { className: 'preview-progress-bar' })),
+  'Alert/Default': () => e('div', { className: 'preview-alert', style: { padding: 8 } }, e('span', { style: { fontSize: 11 } }, 'ℹ️ Alert')),
+  'Tabs': () => e('div', { className: 'preview-tabs' }, e('div', { className: 'preview-tab active' }, 'Tab 1'), e('div', { className: 'preview-tab' }, 'Tab 2')),
+  'Pagination': () => e('div', { style: { display: 'flex', gap: 4 } }, [1, 2, 3].map(n => e('div', { key: n, style: { width: 24, height: 24, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, background: n === 1 ? '#3b82f6' : '#f4f4f5', color: n === 1 ? '#fff' : '#333' } }, n))),
+  'Breadcrumb Item': () => e('div', { style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 } }, 'Home', e('span', null, '/'), 'Page'),
+  'Sidebar': () => e('div', { style: { width: '100%', height: 50, background: '#f4f4f5', borderRadius: 4, padding: 4, display: 'flex', flexDirection: 'column', gap: 4 } }, e('div', { style: { height: 6, width: 20, background: '#3b82f6', borderRadius: 2 } }), e('div', { style: { height: 4, width: 30, background: '#e4e4e7', borderRadius: 2 } }), e('div', { style: { height: 4, width: 25, background: '#e4e4e7', borderRadius: 2 } })),
+  'Dialog': () => e('div', { style: { border: '1px solid #e4e4e7', borderRadius: 8, padding: 8, width: '100%' } }, e('div', { style: { fontSize: 11, fontWeight: 500 } }, 'Dialog Title'), e('div', { style: { fontSize: 10, color: '#64748b', marginTop: 4 } }, 'Dialog description')),
+  'Accordion/Open': () => e('div', { style: { border: '1px solid #e4e4e7', borderRadius: 4, width: '100%' } }, e('div', { style: { padding: 6, fontSize: 10, borderBottom: '1px solid #e4e4e7' } }, '▼ Accordion'), e('div', { style: { padding: 6, fontSize: 9, color: '#64748b' } }, 'Content')),
+  'Tooltip': () => e('div', { style: { background: '#18181b', color: '#fff', padding: '4px 8px', borderRadius: 4, fontSize: 10 } }, 'Tooltip'),
+  'Textarea': () => e('textarea', { className: 'preview-input', style: { height: 40, resize: 'none' }, placeholder: 'Enter text...' }),
+  'Select': () => e('div', { style: { width: '100%', padding: '6px 10px', border: '1px solid #e4e4e7', borderRadius: 6, fontSize: 11, display: 'flex', justifyContent: 'space-between' } }, e('span', null, 'Select...'), e('span', null, '▼')),
+};
+
+// Default preview for unknown components
+const DefaultPreview = ({ name }) => e('div', { style: { padding: 8, fontSize: 10, color: '#64748b', textAlign: 'center' } }, name.split('/')[0]);
+
+// Category mapping
+const componentCategory = {
+  'Button': 'Form', 'Icon Button': 'Form', 'Input': 'Form', 'Input Group': 'Form', 'Input OTP': 'Form', 'Input OTP Group': 'Form',
+  'Select': 'Form', 'Textarea': 'Form', 'Checkbox': 'Form', 'Radio': 'Form', 'Switch': 'Form', 'Combobox': 'Form',
+  'Avatar': 'Data Display', 'Badge': 'Data Display', 'Card': 'Data Display', 'Card Action': 'Data Display', 'Card Plain': 'Data Display', 'Card Image': 'Data Display',
+  'Table': 'Data Display', 'Data Table': 'Data Display', 'List': 'Data Display',
+  'Accordion': 'Disclosure', 'Tabs': 'Disclosure',
+  'Alert': 'Feedback', 'Progress': 'Feedback',
+  'Sidebar': 'Navigation', 'Breadcrumb': 'Navigation', 'Pagination': 'Navigation', 'Breadcrumb Item': 'Navigation',
+  'Dialog': 'Overlay', 'Dropdown': 'Overlay', 'Modal': 'Overlay', 'Tooltip': 'Overlay',
+};
+
+function renderReactComponents() {
+  const reusableComponents = components.filter(c => c.reusable);
+  const categories = {};
+  reusableComponents.forEach(comp => {
+    const baseName = comp.name.split('/')[0];
+    const category = componentCategory[baseName] || 'Other';
+    if (!categories[category]) categories[category] = [];
+    categories[category].push(comp);
   });
   
-  overlay.addEventListener('dragleave', (e) => {
-    if (e.target === overlay) overlay.classList.remove('active');
-  });
+  const categoryOrder = ['Form', 'Data Display', 'Disclosure', 'Feedback', 'Navigation', 'Overlay', 'Other'];
+  const categoryIcons = { Form: '📝', 'Data Display': '📊', Disclosure: '📂', Feedback: '💬', Navigation: '🧭', Overlay: '🔲', Other: '📦' };
   
-  overlay.addEventListener('dragover', (e) => e.preventDefault());
-  
-  overlay.addEventListener('drop', (e) => {
-    e.preventDefault();
-    overlay.classList.remove('active');
+  const elements = categoryOrder.map(cat => {
+    const items = categories[cat];
+    if (!items || items.length === 0) return null;
     
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.name.endsWith('.pen')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const doc = JSON.parse(event.target.result);
-            loadAndRender(doc);
-          } catch (err) {
-            alert('Invalid .pen file: ' + err.message);
-          }
-        };
-        reader.readAsText(file);
-      } else {
-        alert('Please drop a .pen file');
-      }
-    }
-  });
+    return e('div', { key: cat, className: 'category-section' },
+      e('div', { className: 'category-title' }, `${categoryIcons[cat] || '📦'} ${cat} (${items.length})`),
+      e('div', { className: 'component-grid' },
+        items.map(comp => {
+          const Preview = ComponentPreviews[comp.name] || (() => e(DefaultPreview, { name: comp.name }));
+          return e('div', {
+            key: comp.id,
+            className: `component-preview ${activeComponentId === comp.id ? 'active' : ''}`,
+            onClick: () => focusComponent(comp.id)
+          },
+            e(Preview),
+            e('div', { className: 'component-label' }, comp.name.split('/')[1] || comp.name.split('/')[0])
+          );
+        })
+      )
+    );
+  }).filter(Boolean);
+  
+  const container = e('div', null,
+    e('h3', null, '📦 Components', e('span', { style: { fontSize: 12, color: '#64748b' } }, ` (${reusableComponents.length})`)),
+    elements
+  );
+  
+  ReactDOM.render(container, document.getElementById('componentsPanel'));
 }
 
-// 初始化
+// Setup
 window.onload = () => {
   resizeCanvas();
-  setupPan();
-  setupDragDrop();
   loadSample();
+  setupPan();
 };
 
 window.onresize = resizeCanvas;
+
+function setupPan() {
+  canvas.style.cursor = 'grab';
+  canvas.addEventListener('mousedown', (e) => {
+    const controlPanel = document.querySelector('.control-panel');
+    const componentsPanel = document.querySelector('.components-panel');
+    if (controlPanel) {
+      const rect = controlPanel.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
+    }
+    if (componentsPanel) {
+      const rect = componentsPanel.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
+    }
+    isDragging = true;
+    dragStartX = e.clientX - panX;
+    dragStartY = e.clientY - panY;
+    canvas.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    panX = e.clientX - dragStartX;
+    panY = e.clientY - dragStartY;
+    if (penDocument) renderDocument(penDocument);
+  });
+  document.addEventListener('mouseup', () => {
+    if (isDragging) { isDragging = false; canvas.style.cursor = 'grab'; }
+  });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -10 : 10;
+    currentZoom = Math.max(25, Math.min(400, currentZoom + delta));
+    document.getElementById('zoomSlider').value = currentZoom;
+    document.getElementById('zoomValue').textContent = currentZoom + '%';
+    if (penDocument) renderDocument(penDocument);
+  }, { passive: false });
+}
 </script>
 </body>
 </html>
