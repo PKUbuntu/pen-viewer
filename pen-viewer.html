@@ -480,13 +480,21 @@ function togglePanel() {
 // 加载示例
 async function loadSample() {
   try {
-    const response = await fetch('sample.pen');
+    const response = await fetch('pencil-new.pen');
     const text = await response.text();
     const doc = JSON.parse(text);
     loadAndRender(doc);
   } catch (err) {
-    console.error('Failed to load sample.pen:', err);
-    alert('Failed to load sample.pen');
+    console.error('Failed to load pencil-new.pen:', err);
+    // Fallback to sample.pen
+    try {
+      const response = await fetch('sample.pen');
+      const text = await response.text();
+      const doc = JSON.parse(text);
+      loadAndRender(doc);
+    } catch (err2) {
+      alert('Failed to load design files');
+    }
   }
 }
 
