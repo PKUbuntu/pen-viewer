@@ -79,8 +79,9 @@
       pointer-events: auto;
       background: white;
       border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 0 0 3px #3b82f6, 0 4px 20px rgba(0,0,0,0.15);
       overflow: hidden;
+      transform-origin: top left;
     }
     
     .control-panel {
@@ -854,7 +855,7 @@ const ShadcnComponents = {
   'Combobox/Default': () => `<div><input class="shadcn-input" placeholder="Search..." style="padding-right:30px;"><div style="margin-top:4px;border:1px solid #e4e4e7;border-radius:6px;overflow:hidden;"><div style="padding:8px;font-size:14px;">Option 1</div><div style="padding:8px;font-size:14px;background:#f4f4f5;">Option 2</div></div></div>`,
 };
 
-// 更新组件叠加层
+// 更新组件叠加层 - 在组件原位置渲染 shadcn 组件
 function updateComponentOverlay() {
   const overlay = document.getElementById('component-overlay');
   if (!activeComponentId) {
@@ -874,27 +875,27 @@ function updateComponentOverlay() {
     return;
   }
   
-  // 计算屏幕位置
-  const screenX = (comp.x + (renderOffsetX - panX) / renderScale) * renderScale + panX;
-  const screenY = (comp.y + (renderOffsetY - panY) / renderScale) * renderScale + panY;
+  // 计算组件在屏幕上的实际位置（与 Canvas 渲染一致）
+  const screenX = comp.x * renderScale + renderOffsetX;
+  const screenY = comp.y * renderScale + renderOffsetY;
+  const screenW = comp.width * renderScale;
+  const screenH = comp.height * renderScale;
   
-  // 在组件位置右侧显示 shadcn 组件
   const html = generator();
-  const compWidth = comp.width * renderScale;
-  const compHeight = comp.height * renderScale;
   
+  // 直接在组件位置上覆盖 shadcn 组件
   overlay.innerHTML = `
     <div class="overlay-component" style="
-      left: ${screenX + compWidth + 20}px;
+      left: ${screenX}px;
       top: ${screenY}px;
-      max-width: 300px;
+      width: ${screenW}px;
+      min-height: ${screenH}px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     ">
-      <div style="padding:8px;background:#f4f4f5;font-size:10px;color:#64748b;border-bottom:1px solid #e4e4e7;">
-        ${comp.name}
-      </div>
-      <div style="padding:16px;">
-        ${html}
-      </div>
+      ${html}
     </div>
   `;
 }
@@ -973,43 +974,55 @@ window.onresize = resizeCanvas;
 
 function setupPan() {
   canvas.style.cursor = 'grab';
+  
   canvas.addEventListener('mousedown', (e) => {
+    // 检查是否点击在面板区域内
     const controlPanel = document.querySelector('.control-panel');
     const componentsPanel = document.querySelector('.components-panel');
-    const overlay = document.getElementById('component-overlay');
+    
     if (controlPanel) {
       const rect = controlPanel.getBoundingClientRect();
-      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
+      if (e.clientX >= rect.left && e.clientX <= rect.right && 
+          e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        return;
+      }
     }
+    
     if (componentsPanel) {
       const rect = componentsPanel.getBoundingClientRect();
-      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
+      if (e.clientX >= rect.left && e.clientX <= rect.right && 
+          e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        return;
+      }
     }
-    if (overlay) {
-      const rect = overlay.getBoundingClientRect();
-      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) return;
-    }
+    
     isDragging = true;
     dragStartX = e.clientX - panX;
     dragStartY = e.clientY - panY;
     canvas.style.cursor = 'grabbing';
-    e.preventDefault();
   });
+  
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     panX = e.clientX - dragStartX;
     panY = e.clientY - dragStartY;
     if (penDocument) renderDocument(penDocument);
   });
+  
   document.addEventListener('mouseup', () => {
-    if (isDragging) { isDragging = false; canvas.style.cursor = 'grab'; }
+    if (isDragging) {
+      isDragging = false;
+      canvas.style.cursor = 'grab';
+    }
   });
+  
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -10 : 10;
-    currentZoom = Math.max(25, Math.min(400, currentZoom + delta));
-    document.getElementById('zoomSlider').value = currentZoom;
-    document.getElementById('zoomValue').textContent = currentZoom + '%';
+    const newZoom = Math.max(25, Math.min(400, currentZoom + delta));
+    currentZoom = newZoom;
+    document.getElementById('zoomSlider').value = newZoom;
+    document.getElementById('zoomValue').textContent = newZoom + '%';
     if (penDocument) renderDocument(penDocument);
   }, { passive: false });
 }
