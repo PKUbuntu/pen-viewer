@@ -483,16 +483,41 @@ function renderDocument(doc) {
   resolveVariables(doc);
   
   if (doc.children && doc.children.length > 0) {
+    // 计算所有根节点的边界
+    let minX = 0, minY = 0, maxWidth = canvas.width, maxHeight = canvas.height;
+    
     doc.children.forEach(child => {
-      let width = resolveSize(child.width, canvas.width);
-      let height = resolveSize(child.height, canvas.height);
+      if (child.x && child.x < minX) minX = child.x;
+      if (child.y && child.y < minY) minY = child.y;
+      if (child.width && typeof child.width === 'number' && child.width > maxWidth) maxWidth = child.width;
+      if (child.height && typeof child.height === 'number' && child.height > maxHeight) maxHeight = child.height;
+    });
+    
+    // 计算缩放比例以适应画布
+    const scaleX = canvas.width / maxWidth;
+    const scaleY = canvas.height / maxHeight;
+    const scale = Math.min(scaleX, scaleY, 1);
+    
+    // 计算偏移使内容从正确位置开始
+    const offsetX = minX < 0 ? -minX * scale : 0;
+    const offsetY = minY < 0 ? -minY * scale : 0;
+    
+    // 应用变换
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    if (scale < 1) ctx.scale(scale, scale);
+    
+    doc.children.forEach(child => {
+      let width = resolveSize(child.width, maxWidth);
+      let height = resolveSize(child.height, maxHeight);
       
-      // 如果没有指定尺寸，使用画布大小
-      if (!child.width) width = canvas.width;
-      if (!child.height) height = canvas.height;
+      if (!child.width) width = maxWidth;
+      if (!child.height) height = maxHeight;
       
       renderNode(ctx, child, child.x || 0, child.y || 0, width, height);
     });
+    
+    ctx.restore();
   }
 }
 
