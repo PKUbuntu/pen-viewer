@@ -349,13 +349,17 @@ let activeComponentId = null;
 function extractComponents(node, parentX = 0, parentY = 0, result = []) {
   const x = parentX + (node.x || 0);
   const y = parentY + (node.y || 0);
-  const width = node.width || 0;
-  const height = node.height || 0;
+  let width = node.width;
+  let height = node.height;
+  
+  // 处理非数值类型的尺寸
+  if (typeof width !== 'number' || width <= 0) width = 100;
+  if (typeof height !== 'number' || height <= 0) height = 100;
   
   // 如果有名字且是 frame/rectangle/ellipse/text，加入列表
-  if (node.name && node.type && ['frame', 'rectangle', 'ellipse', 'text'].includes(node.type)) {
+  if (node.name && node.id && node.type && ['frame', 'rectangle', 'ellipse', 'text'].includes(node.type)) {
     // 跳过太小的元素和通用名称
-    const skipNames = ['Frame', 'Rectangle', 'Ellipse', 'Text', 'Group'];
+    const skipNames = ['Frame', 'Rectangle', 'Ellipse', 'Text', 'Group', 'Vector', 'Line', 'Circle'];
     if (!skipNames.includes(node.name)) {
       result.push({
         id: node.id,
@@ -364,8 +368,8 @@ function extractComponents(node, parentX = 0, parentY = 0, result = []) {
         reusable: node.reusable || false,
         x: x,
         y: y,
-        width: typeof width === 'number' ? width : 100,
-        height: typeof height === 'number' ? height : 100
+        width: width,
+        height: height
       });
     }
   }
@@ -913,21 +917,38 @@ function renderDocument(doc) {
     if (activeComponentId) {
       const activeComp = components.find(c => c.id === activeComponentId);
       if (activeComp) {
+        // 绘制高亮边框
+        ctx.save();
         ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2 / scale;
-        ctx.setLineDash([5 / scale, 5 / scale]);
+        ctx.lineWidth = 3 / scale;
+        ctx.setLineDash([8 / scale, 4 / scale]);
         ctx.strokeRect(
-          activeComp.x - 4,
-          activeComp.y - 4,
-          activeComp.width + 8,
-          activeComp.height + 8
+          activeComp.x - 6 / scale,
+          activeComp.y - 6 / scale,
+          activeComp.width + 12 / scale,
+          activeComp.height + 12 / scale
         );
         ctx.setLineDash([]);
         
-        // 组件名称标签
+        // 绘制组件名称标签背景
+        const labelHeight = 20 / scale;
+        const labelPadding = 6 / scale;
+        ctx.font = `bold ${12 / scale}px -apple-system, sans-serif`;
+        const textWidth = ctx.measureText(activeComp.name).width;
+        
         ctx.fillStyle = '#3b82f6';
-        ctx.font = `${12 / scale}px -apple-system, sans-serif`;
-        ctx.fillText(activeComp.name, activeComp.x, activeComp.y - 8 / scale);
+        ctx.fillRect(
+          activeComp.x - 6 / scale,
+          activeComp.y - 6 / scale - labelHeight,
+          textWidth + labelPadding * 2,
+          labelHeight
+        );
+        
+        // 绘制标签文字
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(activeComp.name, activeComp.x - 6 / scale + labelPadding, activeComp.y - 6 / scale - labelHeight / 2);
+        ctx.restore();
       }
     }
     
@@ -986,13 +1007,31 @@ function setupPan() {
   canvas.style.cursor = 'grab';
   
   canvas.addEventListener('mousedown', (e) => {
-    // 忽略控制面板区域的点击
-    if (e.clientX < 200 && e.clientY < 300) return;
+    // 检查是否点击在控制面板或组件面板区域
+    const controlPanel = document.querySelector('.control-panel');
+    const componentsPanel = document.querySelector('.components-panel');
+    
+    if (controlPanel) {
+      const rect = controlPanel.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && 
+          e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        return; // 点击在控制面板内，不处理拖动
+      }
+    }
+    
+    if (componentsPanel) {
+      const rect = componentsPanel.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && 
+          e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        return; // 点击在组件面板内，不处理拖动
+      }
+    }
     
     isDragging = true;
     dragStartX = e.clientX - panX;
     dragStartY = e.clientY - panY;
     canvas.style.cursor = 'grabbing';
+    e.preventDefault();
   });
   
   document.addEventListener('mousemove', (e) => {
@@ -1003,8 +1042,10 @@ function setupPan() {
   });
   
   document.addEventListener('mouseup', () => {
-    isDragging = false;
-    canvas.style.cursor = 'grab';
+    if (isDragging) {
+      isDragging = false;
+      canvas.style.cursor = 'grab';
+    }
   });
   
   // 滚轮缩放
