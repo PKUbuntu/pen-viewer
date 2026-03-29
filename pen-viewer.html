@@ -471,7 +471,11 @@
   <div class="components-panel" id="componentsPanel"></div>
   
   <button class="toggle-components secondary" onclick="toggleComponents()">📦</button>
+  <button class="secondary" style="position:fixed;bottom:16px;left:16px;z-index:100;" onclick="document.getElementById('fileInput').click()">📂 Open File</button>
+  <input type="file" id="fileInput" accept=".pen,.json" style="display:none" onchange="handleFileSelect(event)">
   <div id="drag-overlay" class="drag-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(59,130,246,0.95);z-index:1000;justify-content:center;align-items:center;"><p style="color:white;font-size:24px;">Drop .pen file here</p></div>
+  <div id="loading-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.9);z-index:2000;justify-content:center;align-items:center;"><p style="color:white;font-size:18px;">Loading...</p></div>
+  <div id="error-toast" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#ef4444;color:white;padding:12px 24px;border-radius:8px;z-index:3000;font-size:14px;"></div>
 
 <script>
 // ====== Main Canvas Renderer ======
@@ -573,7 +577,7 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
   if (width <= 0 || height <= 0) return;
   ctx.save();
   if (node.opacity !== undefined) ctx.globalAlpha = node.opacity;
-  
+
   if (node.type === 'frame' || node.type === 'rectangle') {
     if (node.effect && node.effect.type === 'shadow') {
       ctx.shadowColor = resolveColor(node.effect.color) || 'rgba(0,0,0,0.1)';
@@ -605,18 +609,282 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
       ctx.fillStyle = fillColor;
       ctx.fill();
     }
-  } else if (node.type === 'text') {
-    const fillColor = resolveColor(node.fill);
-    if (fillColor) {
-      ctx.fillStyle = fillColor;
-      ctx.font = `${node.fontWeight || 'normal'} ${node.fontSize || 16}px -apple-system, sans-serif`;
-      ctx.textAlign = node.textAlign || 'left';
-      ctx.textBaseline = node.textAlignVertical === 'middle' ? 'middle' : 'top';
-      ctx.fillText(node.content || '', node.textAlign === 'center' ? x + (width || 0) / 2 : x, node.textAlignVertical === 'middle' ? y + (height || 0) / 2 : y);
+    // stroke for ellipse
+    if (node.stroke && node.stroke.fill) {
+      const strokeColor = resolveColor(node.stroke.fill);
+      if (strokeColor) {
+        ctx.beginPath();
+        ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = resolveStrokeThickness(node.stroke.thickness);
+        ctx.stroke();
+      }
     }
+  } else if (node.type === 'line') {
+    const strokeColor = resolveColor(node.stroke?.fill || node.fill);
+    if (strokeColor) {
+      ctx.beginPath();
+      const startX = node.x1 !== undefined ? x : x;
+      const startY = node.y1 !== undefined ? y : y;
+      const endX = node.x2 !== undefined ? x + node.x2 - (node.x || 0) : x + width;
+      const endY = node.y2 !== undefined ? y + node.y2 - (node.y || 0) : y + height;
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = resolveStrokeThickness(node.stroke?.thickness || node.thickness || 1);
+      if (node.stroke?.lineCap) ctx.lineCap = node.stroke.lineCap;
+      if (node.stroke?.lineJoin) ctx.lineJoin = node.stroke.lineJoin;
+      ctx.stroke();
+    }
+  } else if (node.type === 'path') {
+    const strokeColor = resolveColor(node.stroke?.fill || node.fill);
+    const fillPathColor = resolveColor(node.fill);
+    if (node.path) {
+      ctx.beginPath();
+      const pathCommands = parsePath(node.path);
+      drawPath(ctx, pathCommands, x, y, width, height);
+      if (fillPathColor) {
+        ctx.fillStyle = fillPathColor;
+        ctx.fill();
+      }
+      if (strokeColor) {
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = resolveStrokeThickness(node.stroke?.thickness || 1);
+        ctx.stroke();
+      }
+    }
+  } else if (node.type === 'image' && node.src) {
+    renderImage(ctx, node, x, y, width, height);
+  } else if (node.type === 'text') {
+    renderText(ctx, node, x, y, width, height);
   }
   ctx.restore();
   if (node.children && node.children.length > 0) renderChildren(ctx, node, x, y, width, height);
+}
+
+// Parse SVG-like path commands
+function parsePath(pathStr) {
+  const commands = [];
+  const regex = /([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)/g;
+  let match;
+  while ((match = regex.exec(pathStr)) !== null) {
+    const cmd = match[1];
+    const args = match[2].trim().split(/[\s,]+/).filter(s => s).map(Number);
+    commands.push({ cmd, args });
+  }
+  return commands;
+}
+
+// Draw path commands on canvas
+function drawPath(ctx, commands, x, y, width, height) {
+  let currentX = 0, currentY = 0;
+  let startX = 0, startY = 0;
+  let lastControlX = 0, lastControlY = 0;
+
+  for (const { cmd, args } of commands) {
+    switch (cmd) {
+      case 'M': // Move to
+        currentX = x + args[0];
+        currentY = y + args[1];
+        startX = currentX;
+        startY = currentY;
+        ctx.moveTo(currentX, currentY);
+        break;
+      case 'm':
+        currentX += args[0];
+        currentY += args[1];
+        startX = currentX;
+        startY = currentY;
+        ctx.moveTo(currentX, currentY);
+        break;
+      case 'L': // Line to
+        currentX = x + args[0];
+        currentY = y + args[1];
+        ctx.lineTo(currentX, currentY);
+        break;
+      case 'l':
+        currentX += args[0];
+        currentY += args[1];
+        ctx.lineTo(currentX, currentY);
+        break;
+      case 'H': // Horizontal line
+        currentX = x + args[0];
+        ctx.lineTo(currentX, currentY);
+        break;
+      case 'h':
+        currentX += args[0];
+        ctx.lineTo(currentX, currentY);
+        break;
+      case 'V': // Vertical line
+        currentY = y + args[0];
+        ctx.lineTo(currentX, currentY);
+        break;
+      case 'v':
+        currentY += args[0];
+        ctx.lineTo(currentX, currentY);
+        break;
+      case 'C': // Cubic bezier
+        ctx.bezierCurveTo(
+          x + args[0], y + args[1],
+          x + args[2], y + args[3],
+          x + args[4], y + args[5]
+        );
+        lastControlX = x + args[2];
+        lastControlY = y + args[3];
+        currentX = x + args[4];
+        currentY = y + args[5];
+        break;
+      case 'c':
+        ctx.bezierCurveTo(
+          currentX + args[0], currentY + args[1],
+          currentX + args[2], currentY + args[3],
+          currentX + args[4], currentY + args[5]
+        );
+        lastControlX = currentX + args[2];
+        lastControlY = currentY + args[3];
+        currentX += args[4];
+        currentY += args[5];
+        break;
+      case 'S': // Smooth cubic bezier
+        ctx.bezierCurveTo(
+          2 * currentX - lastControlX, 2 * currentY - lastControlY,
+          x + args[0], y + args[1],
+          x + args[2], y + args[3]
+        );
+        lastControlX = x + args[0];
+        lastControlY = y + args[1];
+        currentX = x + args[2];
+        currentY = y + args[3];
+        break;
+      case 's':
+        ctx.bezierCurveTo(
+          2 * currentX - lastControlX, 2 * currentY - lastControlY,
+          currentX + args[0], currentY + args[1],
+          currentX + args[2], currentY + args[3]
+        );
+        lastControlX = currentX + args[0];
+        lastControlY = currentY + args[1];
+        currentX += args[2];
+        currentY += args[3];
+        break;
+      case 'Q': // Quadratic bezier
+        ctx.quadraticCurveTo(
+          x + args[0], y + args[1],
+          x + args[2], y + args[3]
+        );
+        lastControlX = x + args[0];
+        lastControlY = y + args[1];
+        currentX = x + args[2];
+        currentY = y + args[3];
+        break;
+      case 'q':
+        ctx.quadraticCurveTo(
+          currentX + args[0], currentY + args[1],
+          currentX + args[2], currentY + args[3]
+        );
+        lastControlX = currentX + args[0];
+        lastControlY = currentY + args[1];
+        currentX += args[2];
+        currentY += args[3];
+        break;
+      case 'Z': // Close path
+      case 'z':
+        ctx.closePath();
+        currentX = startX;
+        currentY = startY;
+        break;
+    }
+  }
+}
+
+// Image cache for performance
+const imageCache = {};
+function renderImage(ctx, node, x, y, width, height) {
+  const src = resolveImageSrc(node.src);
+  if (!src) return;
+
+  if (imageCache[src]) {
+    const img = imageCache[src];
+    if (img.complete) {
+      ctx.drawImage(img, x, y, width, height);
+    }
+    return;
+  }
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    imageCache[src] = img;
+    ctx.drawImage(img, x, y, width, height);
+  };
+  img.onerror = () => {
+    // Draw placeholder on error
+    ctx.fillStyle = '#e5e7eb';
+    drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
+    ctx.fill();
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '14px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Image', x + width / 2, y + height / 2);
+  };
+  img.src = src;
+}
+
+function resolveImageSrc(src) {
+  if (!src) return null;
+  if (typeof src === 'string') return src;
+  if (src.type === 'url' && src.url) return src.url;
+  if (src.type === 'data' && src.data) return src.data;
+  return null;
+}
+
+// Improved text rendering with multi-line support
+function renderText(ctx, node, x, y, width, height) {
+  const fillColor = resolveColor(node.fill);
+  if (!fillColor) return;
+
+  ctx.fillStyle = fillColor;
+  const fontSize = node.fontSize || 14;
+  const fontWeight = node.fontWeight || 'normal';
+  const fontFamily = node.fontFamily || '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  ctx.textAlign = node.textAlign || 'left';
+  ctx.textBaseline = node.textBaseline || 'top';
+
+  const content = node.content || '';
+  const lineHeight = node.lineHeight || fontSize * 1.2;
+  const textAlignVertical = node.textAlignVertical || 'start';
+
+  let textX = x;
+  if (node.textAlign === 'center') textX = x + (width || 0) / 2;
+  else if (node.textAlign === 'right') textX = x + (width || 0);
+
+  let textY = y;
+  if (textAlignVertical === 'middle') textY = y + (height || 0) / 2 - (lineHeight * getLineCount(content) - lineHeight) / 2;
+  else if (textAlignVertical === 'end') textY = y + (height || 0) - getLineCount(content) * lineHeight;
+
+  const lines = content.split('\n');
+  const maxWidth = width || 1000;
+
+  lines.forEach((line, index) => {
+    if (node.textOverflow === 'ellipsis' && ctx.measureText(line).width > maxWidth) {
+      line = truncateText(ctx, line, maxWidth);
+    }
+    ctx.fillText(line, textX, textY + index * lineHeight);
+  });
+}
+
+function getLineCount(text) {
+  return text.split('\n').length;
+}
+
+function truncateText(ctx, text, maxWidth) {
+  let truncated = text;
+  while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 0) {
+    truncated = truncated.slice(0, -1);
+  }
+  return truncated + '...';
 }
 
 function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight) {
@@ -635,32 +903,83 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
   const contentY = parentY + paddingTop;
   const contentWidth = parentWidth - paddingLeft - paddingRight;
   const contentHeight = parentHeight - paddingTop - paddingBottom;
-  
+
   if (layout === 'none') {
     parent.children.forEach(child => renderNode(ctx, child, parentX, parentY, parentWidth, parentHeight));
   } else if (layout === 'horizontal') {
-    let startX = contentX;
     const childrenWithWidth = parent.children.map(child => ({ child, width: resolveSize(child.width, contentWidth) || 0 }));
-    if (justifyContent === 'center') startX = contentX + (contentWidth - childrenWithWidth.reduce((s, { width }) => s + width, 0)) / 2;
-    else if (justifyContent === 'end') startX = contentX + contentWidth - childrenWithWidth.reduce((s, { width }) => s + width, 0);
+    const totalChildrenWidth = childrenWithWidth.reduce((s, { width }) => s + width, 0);
+    const totalGapWidth = (childrenWithWidth.length - 1) * gap;
+
+    let startX = contentX;
+    if (justifyContent === 'center') startX = contentX + (contentWidth - totalChildrenWidth - totalGapWidth) / 2;
+    else if (justifyContent === 'end') startX = contentX + contentWidth - totalChildrenWidth - totalGapWidth;
+    else if (justifyContent === 'space_between') startX = contentX;
+    else if (justifyContent === 'space_around') startX = contentX + (contentWidth - totalChildrenWidth - totalGapWidth) / 2;
+    else if (justifyContent === 'space_evenly') {
+      const evenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length + 1);
+      startX = contentX + evenGap;
+    }
+
     childrenWithWidth.forEach((item, i) => {
       const childHeight = resolveSize(item.child.height, contentHeight);
       let childY = contentY;
       if (alignItems === 'center') childY = contentY + (contentHeight - childHeight) / 2;
       else if (alignItems === 'end') childY = contentY + contentHeight - childHeight;
-      renderNode(ctx, item.child, startX, childY, item.width, childHeight);
-      startX += item.width + gap;
+      else if (alignItems === 'stretch') childHeight = contentHeight;
+
+      let itemX = startX;
+      if (justifyContent === 'space_between') {
+        if (i === 0) itemX = contentX;
+        else if (i === childrenWithWidth.length - 1) itemX = contentX + contentWidth - item.width;
+        else itemX = contentX + (totalChildrenWidth / (childrenWithWidth.length - 1)) * i + gap * (i - 1) + (contentWidth - totalChildrenWidth) / 2;
+      } else if (justifyContent === 'space_evenly') {
+        const evenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length + 1);
+        itemX = contentX + evenGap * (i + 1) + childrenWithWidth.slice(0, i).reduce((s, c) => s + c.width, 0) + gap * i;
+      }
+
+      renderNode(ctx, item.child, itemX, childY, item.width, childHeight);
+      if (justifyContent !== 'space_between' && justifyContent !== 'space_evenly') {
+        startX += item.width + gap;
+      }
     });
   } else if (layout === 'vertical') {
+    const childrenWithHeight = parent.children.map(child => ({ child, height: resolveSize(child.height, contentHeight) || 0 }));
+    const totalChildrenHeight = childrenWithHeight.reduce((s, { height }) => s + height, 0);
+    const totalGapHeight = (childrenWithHeight.length - 1) * gap;
+
     let currentY = contentY;
-    parent.children.forEach(child => {
+    if (justifyContent === 'center') currentY = contentY + (contentHeight - totalChildrenHeight - totalGapHeight) / 2;
+    else if (justifyContent === 'end') currentY = contentY + contentHeight - totalChildrenHeight - totalGapHeight;
+    else if (justifyContent === 'space_between') currentY = contentY;
+    else if (justifyContent === 'space_around') currentY = contentY + (contentHeight - totalChildrenHeight - totalGapHeight) / 2;
+    else if (justifyContent === 'space_evenly') {
+      const evenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length + 1);
+      currentY = contentY + evenGap;
+    }
+
+    parent.children.forEach((child, i) => {
       const childWidth = resolveSize(child.width, contentWidth);
-      const childHeight = resolveSize(child.height, contentHeight);
+      let childHeight = resolveSize(child.height, contentHeight);
       let childX = contentX;
       if (alignItems === 'center') childX = contentX + (contentWidth - childWidth) / 2;
       else if (alignItems === 'end') childX = contentX + contentWidth - childWidth;
-      renderNode(ctx, child, childX, currentY, childWidth, childHeight);
-      currentY += childHeight + gap;
+      else if (alignItems === 'stretch') childWidth = contentWidth;
+
+      let itemY = currentY;
+      if (justifyContent === 'space_between') {
+        if (i === 0) itemY = contentY;
+        else if (i === childrenWithHeight.length - 1) itemY = contentY + contentHeight - childHeight;
+        else itemY = contentY + (totalChildrenHeight / (childrenWithHeight.length - 1)) * i + gap * (i - 1) + (contentHeight - totalChildrenHeight) / 2;
+      } else if (justifyContent === 'space_evenly') {
+        const evenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length + 1);
+        itemY = contentY + evenGap * (i + 1) + childrenWithHeight.slice(0, i).reduce((s, c) => s + c.height, 0) + gap * i;
+      }
+
+      renderNode(ctx, child, childX, itemY, childWidth, childHeight);
+      if (justifyContent !== 'space_between' && justifyContent !== 'space_evenly') {
+        currentY += childHeight + gap;
+      }
     });
   }
 }
@@ -731,11 +1050,16 @@ function loadAndRender(doc) {
 }
 
 async function loadSample() {
+  showLoading(true);
   try {
     const response = await fetch('pencil-new.pen');
+    if (!response.ok) throw new Error('HTTP ' + response.status);
     const doc = JSON.parse(await response.text());
     loadAndRender(doc);
+    showLoading(false);
   } catch (err) {
+    showLoading(false);
+    showError('Failed to load sample: ' + err.message);
     console.error('Failed:', err);
   }
 }
@@ -963,11 +1287,89 @@ function renderReactList() {
   ReactDOM.render(container, document.getElementById('componentsPanel'));
 }
 
+// File handling
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  loadPenFile(file);
+}
+
+function loadPenFile(file) {
+  showLoading(true);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const doc = JSON.parse(e.target.result);
+      loadAndRender(doc);
+      showLoading(false);
+    } catch (err) {
+      showLoading(false);
+      showError('Failed to parse .pen file: ' + err.message);
+      console.error('Parse error:', err);
+    }
+  };
+  reader.onerror = () => {
+    showLoading(false);
+    showError('Failed to read file');
+  };
+  reader.readAsText(file);
+}
+
+function showLoading(show) {
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.style.display = show ? 'flex' : 'none';
+}
+
+function showError(message) {
+  const toast = document.getElementById('error-toast');
+  if (toast) {
+    toast.textContent = message;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 5000);
+  }
+}
+
+// Drag and drop
+function setupDragDrop() {
+  const dragOverlay = document.getElementById('drag-overlay');
+  let dragCounter = 0;
+
+  document.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    if (dragOverlay) dragOverlay.style.display = 'flex';
+  });
+
+  document.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter === 0 && dragOverlay) dragOverlay.style.display = 'none';
+  });
+
+  document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+
+  document.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    if (dragOverlay) dragOverlay.style.display = 'none';
+
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith('.pen') || file.name.endsWith('.json'))) {
+      loadPenFile(file);
+    } else {
+      showError('Please drop a .pen or .json file');
+    }
+  });
+}
+
 // Setup
 window.onload = () => {
   resizeCanvas();
   loadSample();
   setupPan();
+  setupDragDrop();
 };
 
 window.onresize = resizeCanvas;
