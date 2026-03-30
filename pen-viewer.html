@@ -145,10 +145,10 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
 
   if (node.type === 'frame' || node.type === 'rectangle') {
     if (node.effect && node.effect.type === 'shadow') {
-      ctx.shadowColor = resolveColor(node.effect.color) || 'rgba(0,0,0,0.1)';
-      ctx.shadowBlur = node.effect.blur || 0;
-      ctx.shadowOffsetX = node.effect.offset?.x || 0;
-      ctx.shadowOffsetY = node.effect.offset?.y || 0;
+      ctx.shadowColor = resolveColor(node.effect.color) || 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = node.effect.blur ?? 10;
+      ctx.shadowOffsetX = node.effect.offset?.x ?? 4;
+      ctx.shadowOffsetY = node.effect.offset?.y ?? 4;
     }
     const fillColor = resolveColor(node.fill);
     if (fillColor) {
