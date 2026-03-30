@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>.pen Viewer</title>
+  <script src="pen-parser.js"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -482,11 +483,15 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+// Initialize parser
+const parser = typeof PenParser !== 'undefined' ? new PenParser() : null;
+
 let variables = {};
 let rawVariables = {};
 let currentTheme = { Mode: 'Light', Base: 'Neutral', Accent: 'Default' };
 let currentZoom = 100;
 let penDocument = null;
+let parsedDocument = null;
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
@@ -506,32 +511,47 @@ function resizeCanvas() {
 }
 
 function resolveVariables(doc) {
-  variables = {};
-  rawVariables = {};
-  if (doc.children && doc.children[0] && doc.children[0].theme) {
-    currentTheme = { ...currentTheme, ...doc.children[0].theme };
-  }
-  if (doc.variables) rawVariables = doc.variables;
-  for (const [key, varDef] of Object.entries(rawVariables)) {
-    if (!varDef || !varDef.value) { variables[key] = null; continue; }
-    const values = Array.isArray(varDef.value) ? varDef.value : [{ value: varDef.value }];
-    let matchedValue = null, defaultFallback = null;
-    for (const item of values) {
-      if (!item.theme && !defaultFallback) defaultFallback = item.value;
-      if (item.theme) {
-        let matches = true;
-        for (const [tk, tv] of Object.entries(item.theme)) {
-          if (currentTheme[tk] !== tv) { matches = false; break; }
-        }
-        if (matches) { matchedValue = item.value; break; }
-      }
+  // Use parser if available
+  if (parser) {
+    parsedDocument = parser.parse(doc);
+    variables = parsedDocument.variables;
+    rawVariables = parsedDocument.rawVariables;
+    if (parsedDocument.theme) {
+      currentTheme = { ...currentTheme, ...parsedDocument.theme };
     }
-    variables[key] = matchedValue || defaultFallback;
+  } else {
+    // Fallback to inline parsing
+    variables = {};
+    rawVariables = {};
+    if (doc.children && doc.children[0] && doc.children[0].theme) {
+      currentTheme = { ...currentTheme, ...doc.children[0].theme };
+    }
+    if (doc.variables) rawVariables = doc.variables;
+    for (const [key, varDef] of Object.entries(rawVariables)) {
+      if (!varDef || !varDef.value) { variables[key] = null; continue; }
+      const values = Array.isArray(varDef.value) ? varDef.value : [{ value: varDef.value }];
+      let matchedValue = null, defaultFallback = null;
+      for (const item of values) {
+        if (!item.theme && !defaultFallback) defaultFallback = item.value;
+        if (item.theme) {
+          let matches = true;
+          for (const [tk, tv] of Object.entries(item.theme)) {
+            if (currentTheme[tk] !== tv) { matches = false; break; }
+          }
+          if (matches) { matchedValue = item.value; break; }
+        }
+      }
+      variables[key] = matchedValue || defaultFallback;
+    }
   }
 }
 
 function resolveColor(color) {
   if (!color) return null;
+  if (parser && typeof parser.resolveColor === 'function') {
+    return parser.resolveColor(color);
+  }
+  // Fallback
   if (typeof color === 'string') {
     if (color.startsWith('$')) return variables[color.slice(1)] || '#888';
     return color;
@@ -540,6 +560,11 @@ function resolveColor(color) {
 }
 
 function resolveSize(val, parentSize = 0) {
+  if (parser && typeof parser.resolveValue === 'function') {
+    const resolved = parser.resolveValue(val, { parentSize });
+    if (resolved !== null && resolved !== undefined) return resolved;
+  }
+  // Fallback
   if (val === 'fill_container') return parentSize;
   if (val === 'fit_content') return null;
   if (typeof val === 'string' && val.startsWith('$')) return variables[val.slice(1)] || 0;
@@ -547,6 +572,10 @@ function resolveSize(val, parentSize = 0) {
 }
 
 function resolveStrokeThickness(thickness) {
+  if (parser && typeof parser.resolveStrokeThickness === 'function') {
+    return parser.resolveStrokeThickness(thickness);
+  }
+  // Fallback
   if (thickness === undefined || thickness === null) return 1;
   if (typeof thickness === 'number') return thickness;
   if (typeof thickness === 'object') return Math.max(thickness.top || 0, thickness.right || 0, thickness.bottom || 0, thickness.left || 0) || 1;
@@ -657,9 +686,97 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
     renderImage(ctx, node, x, y, width, height);
   } else if (node.type === 'text') {
     renderText(ctx, node, x, y, width, height);
+  } else if (node.type === 'icon_font') {
+    renderIconFont(ctx, node, x, y, width, height);
+  } else if (node.type === 'ref') {
+    renderReference(ctx, node, parentX, parentY, parentWidth, parentHeight);
   }
   ctx.restore();
   if (node.children && node.children.length > 0) renderChildren(ctx, node, x, y, width, height);
+}
+
+// Render icon font (Lucide, Material Icons, etc.)
+function renderIconFont(ctx, node, x, y, width, height) {
+  const iconFamily = node.iconFontFamily || 'lucide';
+  const iconName = node.iconFontName || '';
+  const fillColor = resolveColor(node.fill) || '#000';
+  
+  // Map common icon names to Unicode or simple shapes
+  const iconMap = {
+    'chevrons-up-down': '⇅',
+    'chevron-down': '▼',
+    'chevron-up': '▲',
+    'chevron-left': '◀',
+    'chevron-right': '▶',
+    'menu': '☰',
+    'search': '🔍',
+    'home': '⌂',
+    'user': '👤',
+    'settings': '⚙',
+    'bell': '🔔',
+    'heart': '❤',
+    'star': '★',
+    'plus': '+',
+    'minus': '−',
+    'x': '×',
+    'check': '✓',
+    'hexagon': '⬡',
+    'circle': '○',
+    'square': '□',
+    'triangle': '△'
+  };
+  
+  const iconChar = iconMap[iconName] || '◦';
+  
+  ctx.save();
+  ctx.fillStyle = fillColor;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  const fontSize = Math.min(width, height) * 0.7 || 16;
+  ctx.font = `${fontSize}px Arial, sans-serif`;
+  
+  ctx.fillText(iconChar, x + width / 2, y + height / 2);
+  ctx.restore();
+}
+
+// Render component reference
+function renderReference(ctx, node, parentX, parentY, parentWidth, parentHeight) {
+  const refId = node.ref;
+  if (!refId || !parsedDocument) return;
+  
+  // Look up the referenced component
+  let refComponent = null;
+  if (parsedDocument.components && parsedDocument.components.has(refId)) {
+    refComponent = parsedDocument.components.get(refId).node;
+  }
+  
+  if (!refComponent) {
+    // Search in document children
+    const findComponent = (children) => {
+      for (const child of children) {
+        if (child.id === refId) return child;
+        if (child.children) {
+          const found = findComponent(child.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    if (parsedDocument.children) {
+      refComponent = findComponent(parsedDocument.children);
+    }
+  }
+  
+  if (refComponent) {
+    // Render the referenced component at the ref position
+    const refX = parentX + (node.x || 0);
+    const refY = parentY + (node.y || 0);
+    
+    // Clone and position the referenced node
+    const clonedNode = { ...refComponent, x: refX, y: refY };
+    renderNode(ctx, clonedNode, parentX, parentY, parentWidth, parentHeight);
+  }
 }
 
 // Parse SVG-like path commands
@@ -1025,7 +1142,8 @@ function extractComponents(node, parentX = 0, parentY = 0, result = []) {
   let height = node.height;
   if (typeof width !== 'number' || width <= 0) width = 100;
   if (typeof height !== 'number' || height <= 0) height = 100;
-  if (node.name && node.id && node.type && ['frame', 'rectangle', 'ellipse', 'text'].includes(node.type)) {
+  // Support more node types including icon_font
+  if (node.name && node.id && node.type && ['frame', 'rectangle', 'ellipse', 'text', 'icon_font'].includes(node.type)) {
     const skipNames = ['Frame', 'Rectangle', 'Ellipse', 'Text', 'Group', 'Vector', 'Line', 'Circle'];
     if (!skipNames.includes(node.name)) {
       result.push({ id: node.id, name: node.name, type: node.type, reusable: node.reusable || false, x, y, width, height });
@@ -1040,7 +1158,15 @@ function extractComponents(node, parentX = 0, parentY = 0, result = []) {
 function loadAndRender(doc) {
   penDocument = doc;
   components = [];
-  if (doc.children) doc.children.forEach(child => extractComponents(child, 0, 0, components));
+  
+  // Use parser to extract components if available
+  if (parser && parsedDocument) {
+    components = parser.extractComponents(parsedDocument);
+  } else {
+    // Fallback to inline extraction
+    if (doc.children) doc.children.forEach(child => extractComponents(child, 0, 0, components));
+  }
+  
   renderReactList();
   activeComponentId = null;
   panX = 0; panY = 0; currentZoom = 100;

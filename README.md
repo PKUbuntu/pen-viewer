@@ -31,9 +31,11 @@ A web-based renderer for `.pen` files - the design format used by [Pencil.dev](h
 | Flexbox Layout | ✅ |
 | Gap / Padding | ✅ |
 | Justify / Align | ✅ |
+| Icon Fonts | ✅ |
+| Component Refs | ✅ |
+| Theme Variables | ✅ |
 | Gradient Fill | 🚧 |
-| Component Refs | 🚧 |
-| Path | 🚧 |
+| Path/SVG | 🚧 |
 | Image Fill | 🚧 |
 
 ## Usage
@@ -46,6 +48,41 @@ const response = await fetch('design.pen');
 const doc = await response.json();
 renderDocument(doc);
 ```
+
+### Using the Parser Module
+
+The `pen-parser.js` module provides a standalone parser for .pen files:
+
+```javascript
+// Create parser instance
+const parser = new PenParser();
+
+// Parse a .pen document
+const parsed = parser.parse(penJson);
+
+// Access resolved variables
+console.log(parsed.variables);
+
+// Extract components
+const components = parser.extractComponents(parsed);
+
+// Resolve references
+const component = parser.resolveReference('component-id');
+
+// Validate document
+const validation = parser.validate(penJson);
+```
+
+### Parser API
+
+- `parse(input)` - Parse a .pen document (string or object)
+- `resolveValue(value, context)` - Resolve variable references and special keywords
+- `resolveColor(color)` - Resolve color values including variables
+- `resolveStrokeThickness(thickness)` - Handle numeric or object thickness
+- `resolveReference(refId)` - Look up component references
+- `extractComponents(doc)` - Extract all components with metadata
+- `traverse(doc, callback)` - Traverse all nodes in document
+- `validate(doc)` - Validate document structure
 
 ### Example .pen structure
 
@@ -93,12 +130,12 @@ open http://localhost:8888/pen-viewer.html
 ## Roadmap
 
 - [ ] Gradient fill support
-- [ ] Component instance resolution
 - [ ] Path/SVG rendering
 - [ ] Image fill
-- [ ] Theme switching
+- [ ] Theme switching UI
 - [ ] Interactive canvas (zoom, pan, select)
 - [ ] Export to PNG/SVG
+- [ ] Slot mechanism full implementation
 
 ## References
 
