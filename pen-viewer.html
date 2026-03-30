@@ -52,6 +52,7 @@ const ctx = canvas.getContext('2d');
 
 let variables = {};
 let rawVariables = {};
+let componentLibrary = {};
 let currentTheme = { Mode: 'Light', Base: 'Neutral', Accent: 'Default' };
 let currentZoom = 100;
 let penDocument = null;
@@ -68,6 +69,110 @@ function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   if (penDocument) renderDocument(penDocument);
+}
+
+// Build component library from reusable elements
+function buildComponentLibrary(doc) {
+  componentLibrary = {};
+  
+  function traverse(node) {
+    if (node && typeof node === 'object') {
+      if (node.reusable === true && node.id) {
+        componentLibrary[node.id] = node;
+      }
+      if (node.children && Array.isArray(node.children)) {
+        node.children.forEach(traverse);
+      }
+    }
+  }
+  
+  if (doc.children) {
+    doc.children.forEach(traverse);
+  }
+}
+
+// Apply descendant overrides to a component
+function applyDescendants(component, descendants) {
+  if (!descendants) return component;
+  
+  // Deep clone the component
+  const cloned = JSON.parse(JSON.stringify(component));
+  
+  // Apply overrides recursively
+  function applyOverride(node, overrides) {
+    if (!overrides || typeof overrides !== 'object') return;
+    
+    // Apply direct property overrides
+    for (const [key, value] of Object.entries(overrides)) {
+      if (key === 'type' && typeof value === 'object') {
+        // This is a full node replacement
+        Object.assign(node, value);
+        return;
+      }
+      if (key !== 'id' && key !== 'children' && value !== undefined) {
+        node[key] = value;
+      }
+    }
+  }
+  
+  // Process each descendant override
+  for (const [descId, override] of Object.entries(descendants)) {
+    applyDescendantOverride(cloned, descId, override);
+  }
+  
+  return cloned;
+}
+
+// Find and apply override to a specific descendant by id
+function applyDescendantOverride(node, targetId, override) {
+  if (!node) return;
+  
+  if (node.id === targetId) {
+    // Check if this is a full node replacement
+    if (override.type && typeof override.type === 'object') {
+      Object.assign(node, override);
+    } else {
+      // Apply property overrides
+      for (const [key, value] of Object.entries(override)) {
+        if (key !== 'id' && value !== undefined) {
+          node[key] = value;
+        }
+      }
+    }
+    return;
+  }
+  
+  // Recurse into children
+  if (node.children && Array.isArray(node.children)) {
+    node.children.forEach(child => applyDescendantOverride(child, targetId, override));
+  }
+}
+
+// Resolve a ref to its component with descendants applied
+function resolveRef(refNode) {
+  const refId = refNode.ref;
+  const component = componentLibrary[refId];
+  
+  if (!component) {
+    console.warn(`Component "${refId}" not found for ref "${refNode.id}"`);
+    return null;
+  }
+  
+  // Clone and apply the ref's properties
+  const resolved = JSON.parse(JSON.stringify(component));
+  
+  // Apply ref's position and size
+  if (refNode.x !== undefined) resolved.x = refNode.x;
+  if (refNode.y !== undefined) resolved.y = refNode.y;
+  if (refNode.width !== undefined) resolved.width = refNode.width;
+  if (refNode.height !== undefined) resolved.height = refNode.height;
+  
+  // Apply descendant overrides
+  if (refNode.descendants) {
+    return applyDescendants(resolved, refNode.descendants);
+  }
+  
+  return resolved;
 }
 
 function resolveVariables(doc) {
@@ -93,6 +198,8 @@ function resolveVariables(doc) {
     }
     variables[key] = matchedValue || defaultFallback;
   }
+  // Build component library after resolving variables
+  buildComponentLibrary(doc);
 }
 
 function resolveColor(color) {
@@ -135,13 +242,31 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 }
 
 function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parentHeight = 0) {
+  if (!node || !node.type) return;
+  
+  // Handle ref type - resolve to actual component
+  if (node.type === 'ref') {
+    const resolved = resolveRef(node);
+    if (resolved) {
+      renderNode(ctx, resolved, parentX, parentY, parentWidth, parentHeight);
+    }
+    return;
+  }
+  
   const x = parentX + (node.x || 0);
   const y = parentY + (node.y || 0);
-  const width = resolveSize(node.width, parentWidth);
-  const height = resolveSize(node.height, parentHeight);
-  if (width <= 0 || height <= 0) return;
+  let width = resolveSize(node.width, parentWidth);
+  let height = resolveSize(node.height, parentHeight);
+  
+  // Handle fit_content and missing dimensions
+  if (!node.width) width = parentWidth;
+  if (!node.height) height = parentHeight;
+  if (width === null || width <= 0) width = 100;
+  if (height === null || height <= 0) height = 100;
+  
   ctx.save();
   if (node.opacity !== undefined) ctx.globalAlpha = node.opacity;
+  if (node.enabled === false) ctx.globalAlpha = 0.5;
 
   if (node.type === 'frame' || node.type === 'rectangle') {
     if (node.effect && node.effect.type === 'shadow') {
@@ -203,9 +328,10 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
   } else if (node.type === 'path') {
     const strokeColor = resolveColor(node.stroke?.fill || node.fill);
     const fillPathColor = resolveColor(node.fill);
-    if (node.path) {
+    const pathData = node.path || node.geometry;
+    if (pathData) {
       ctx.beginPath();
-      const pathCommands = parsePath(node.path);
+      const pathCommands = parsePath(pathData);
       drawPath(ctx, pathCommands, x, y, width, height);
       if (fillPathColor) {
         ctx.fillStyle = fillPathColor;
@@ -241,8 +367,8 @@ function parsePath(pathStr) {
 
 // Draw path commands on canvas
 function drawPath(ctx, commands, x, y, width, height) {
-  let currentX = 0, currentY = 0;
-  let startX = 0, startY = 0;
+  let currentX = x, currentY = y;
+  let startX = currentX, startY = currentY;
   let lastControlX = 0, lastControlY = 0;
 
   for (const { cmd, args } of commands) {
