@@ -80,7 +80,7 @@ function resolveVariables(doc) {
   for (const [key, varDef] of Object.entries(rawVariables)) {
     if (!varDef || !varDef.value) { variables[key] = null; continue; }
     const values = Array.isArray(varDef.value) ? varDef.value : [{ value: varDef.value }];
-    let matchedValue = null, defaultFallback = null;
+    let matchedValue = null, defaultFallback = null, bestMatchKeys = 0;
     for (const item of values) {
       if (!item.theme && !defaultFallback) defaultFallback = item.value;
       if (item.theme) {
@@ -88,7 +88,13 @@ function resolveVariables(doc) {
         for (const [tk, tv] of Object.entries(item.theme)) {
           if (currentTheme[tk] !== tv) { matches = false; break; }
         }
-        if (matches) { matchedValue = item.value; break; }
+        if (matches) {
+          const matchKeys = Object.keys(item.theme).length;
+          if (matchKeys > bestMatchKeys) {
+            bestMatchKeys = matchKeys;
+            matchedValue = item.value;
+          }
+        }
       }
     }
     variables[key] = matchedValue || defaultFallback;
