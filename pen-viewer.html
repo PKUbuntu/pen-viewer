@@ -114,8 +114,28 @@ function resolveSize(val, parentSize = 0) {
 function resolveStrokeThickness(thickness) {
   if (thickness === undefined || thickness === null) return 1;
   if (typeof thickness === 'number') return thickness;
-  if (typeof thickness === 'object') return Math.max(thickness.top || 0, thickness.right || 0, thickness.bottom || 0, thickness.left || 0) || 1;
+  if (typeof thickness === 'object') {
+    // Handle object with top/right/bottom/left properties
+    if (thickness.top !== undefined || thickness.right !== undefined || thickness.bottom !== undefined || thickness.left !== undefined) {
+      return Math.max(thickness.top || 0, thickness.right || 0, thickness.bottom || 0, thickness.left || 0) || 1;
+    }
+    // Handle object with single value property
+    if (thickness.value !== undefined) return thickness.value || 1;
+    // Handle object with width/height properties
+    if (thickness.width !== undefined || thickness.height !== undefined) {
+      return Math.max(thickness.width || 0, thickness.height || 0) || 1;
+    }
+  }
   return 1;
+}
+
+function getStrokeAlignOffset(stroke, width, height, cornerRadius) {
+  if (!stroke || !stroke.align) return 0;
+  const align = stroke.align.toLowerCase();
+  const thickness = resolveStrokeThickness(stroke.thickness);
+  if (align === 'inside') return thickness / 2;
+  if (align === 'outside') return -thickness / 2;
+  return 0; // center (default)
 }
 
 function drawRoundedRect(ctx, x, y, width, height, radius) {
@@ -160,9 +180,24 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
     if (node.stroke && node.stroke.fill) {
       const strokeColor = resolveColor(node.stroke.fill);
       if (strokeColor) {
-        drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
+        const strokeThickness = resolveStrokeThickness(node.stroke.thickness);
+        const align = node.stroke.align ? node.stroke.align.toLowerCase() : 'center';
+        
+        // Handle stroke align by adjusting the path
+        if (align === 'inside') {
+          // Draw stroke inside - inset the rect by half the stroke width
+          const inset = strokeThickness / 2;
+          drawRoundedRect(ctx, x + inset, y + inset, width - strokeThickness, height - strokeThickness, Math.max(0, (node.cornerRadius || 0) - inset));
+        } else if (align === 'outside') {
+          // Draw stroke outside - outset the rect by half the stroke width
+          const outset = strokeThickness / 2;
+          drawRoundedRect(ctx, x - outset, y - outset, width + strokeThickness, height + strokeThickness, (node.cornerRadius || 0) + outset);
+        } else {
+          // Center (default) - draw on the original path
+          drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
+        }
         ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = resolveStrokeThickness(node.stroke.thickness);
+        ctx.lineWidth = strokeThickness;
         ctx.stroke();
       }
     }
@@ -177,10 +212,27 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
     if (node.stroke && node.stroke.fill) {
       const strokeColor = resolveColor(node.stroke.fill);
       if (strokeColor) {
-        ctx.beginPath();
-        ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+        const strokeThickness = resolveStrokeThickness(node.stroke.thickness);
+        const align = node.stroke.align ? node.stroke.align.toLowerCase() : 'center';
+        const centerX = x + width / 2;
+        const centerY = y + height / 2;
+        
+        // Handle stroke align for ellipse
+        if (align === 'inside') {
+          const inset = strokeThickness / 2;
+          ctx.beginPath();
+          ctx.ellipse(centerX, centerY, width / 2 - inset, height / 2 - inset, 0, 0, Math.PI * 2);
+        } else if (align === 'outside') {
+          const outset = strokeThickness / 2;
+          ctx.beginPath();
+          ctx.ellipse(centerX, centerY, width / 2 + outset, height / 2 + outset, 0, 0, Math.PI * 2);
+        } else {
+          // Center (default)
+          ctx.beginPath();
+          ctx.ellipse(centerX, centerY, width / 2, height / 2, 0, 0, Math.PI * 2);
+        }
         ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = resolveStrokeThickness(node.stroke.thickness);
+        ctx.lineWidth = strokeThickness;
         ctx.stroke();
       }
     }
