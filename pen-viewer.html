@@ -111,10 +111,27 @@ function resolveSize(val, parentSize = 0) {
   return val || 0;
 }
 
-function resolveStrokeThickness(thickness) {
+function resolveStrokeThickness(thickness, side) {
   if (thickness === undefined || thickness === null) return 1;
   if (typeof thickness === 'number') return thickness;
-  if (typeof thickness === 'object') return Math.max(thickness.top || 0, thickness.right || 0, thickness.bottom || 0, thickness.left || 0) || 1;
+  if (typeof thickness === 'object') {
+    // 支持对象类型：{ top, right, bottom, left } 或 { vertical, horizontal }
+    if (side === 'top' || side === 'bottom') {
+      return thickness[side] ?? thickness.vertical ?? thickness.top ?? 0;
+    } else if (side === 'left' || side === 'right') {
+      return thickness[side] ?? thickness.horizontal ?? thickness.right ?? 0;
+    }
+    // 默认返回最大值
+    return Math.max(
+      thickness.top ?? 0,
+      thickness.right ?? 0,
+      thickness.bottom ?? 0,
+      thickness.left ?? 0,
+      thickness.vertical ?? 0,
+      thickness.horizontal ?? 0,
+      1
+    );
+  }
   return 1;
 }
 
@@ -157,13 +174,33 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
       ctx.fill();
     }
     ctx.shadowColor = 'transparent';
+    
+    // 渲染边框 - 支持 stroke.align (inside/center/outside)
     if (node.stroke && node.stroke.fill) {
       const strokeColor = resolveColor(node.stroke.fill);
       if (strokeColor) {
-        drawRoundedRect(ctx, x, y, width, height, node.cornerRadius || 0);
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = resolveStrokeThickness(node.stroke.thickness);
-        ctx.stroke();
+        const align = node.stroke.align || 'center';
+        const thickness = resolveStrokeThickness(node.stroke.thickness);
+        const radius = node.cornerRadius || 0;
+        
+        if (align === 'inside') {
+          const offset = thickness / 2;
+          drawRoundedRect(ctx, x + offset, y + offset, Math.max(0, width - thickness), Math.max(0, height - thickness), Math.max(0, radius - offset));
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = thickness;
+          ctx.stroke();
+        } else if (align === 'outside') {
+          const offset = thickness / 2;
+          drawRoundedRect(ctx, x - offset, y - offset, width + thickness, height + thickness, radius + offset);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = thickness;
+          ctx.stroke();
+        } else {
+          drawRoundedRect(ctx, x, y, width, height, radius);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = thickness;
+          ctx.stroke();
+        }
       }
     }
   } else if (node.type === 'ellipse') {
@@ -177,11 +214,30 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
     if (node.stroke && node.stroke.fill) {
       const strokeColor = resolveColor(node.stroke.fill);
       if (strokeColor) {
-        ctx.beginPath();
-        ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = resolveStrokeThickness(node.stroke.thickness);
-        ctx.stroke();
+        const align = node.stroke.align || 'center';
+        const thickness = resolveStrokeThickness(node.stroke.thickness);
+        
+        if (align === 'inside') {
+          const scale = 1 - thickness / Math.min(width, height);
+          ctx.beginPath();
+          ctx.ellipse(x + width / 2, y + height / 2, (width / 2) * scale, (height / 2) * scale, 0, 0, Math.PI * 2);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = thickness;
+          ctx.stroke();
+        } else if (align === 'outside') {
+          const scale = 1 + thickness / Math.min(width, height);
+          ctx.beginPath();
+          ctx.ellipse(x + width / 2, y + height / 2, (width / 2) * scale, (height / 2) * scale, 0, 0, Math.PI * 2);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = thickness;
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = thickness;
+          ctx.stroke();
+        }
       }
     }
   } else if (node.type === 'line') {
