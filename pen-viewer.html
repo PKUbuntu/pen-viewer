@@ -488,9 +488,18 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
 
       let itemX = startX;
       if (justifyContent === 'space_between') {
-        if (i === 0) itemX = contentX;
-        else if (i === childrenWithWidth.length - 1) itemX = contentX + contentWidth - item.width;
-        else itemX = contentX + (totalChildrenWidth / (childrenWithWidth.length - 1)) * i + gap * (i - 1) + (contentWidth - totalChildrenWidth) / 2;
+        if (childrenWithWidth.length === 1) {
+          itemX = contentX + (contentWidth - item.width) / 2;
+        } else if (i === 0) {
+          itemX = contentX;
+        } else if (i === childrenWithWidth.length - 1) {
+          itemX = contentX + contentWidth - item.width;
+        } else {
+          const segmentWidth = contentWidth - childrenWithWidth[0].width - childrenWithWidth[childrenWithWidth.length - 1].width;
+          const betweenCount = childrenWithWidth.length - 2;
+          const position = (segmentWidth / betweenCount) * (i - 1) + childrenWithWidth[0].width + gap * (i - 1);
+          itemX = contentX + position;
+        }
       } else if (justifyContent === 'space_evenly') {
         const evenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length + 1);
         itemX = contentX + evenGap * (i + 1) + childrenWithWidth.slice(0, i).reduce((s, c) => s + c.width, 0) + gap * i;
@@ -526,9 +535,18 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
 
       let itemY = currentY;
       if (justifyContent === 'space_between') {
-        if (i === 0) itemY = contentY;
-        else if (i === childrenWithHeight.length - 1) itemY = contentY + contentHeight - childHeight;
-        else itemY = contentY + (totalChildrenHeight / (childrenWithHeight.length - 1)) * i + gap * (i - 1) + (contentHeight - totalChildrenHeight) / 2;
+        if (childrenWithHeight.length === 1) {
+          itemY = contentY + (contentHeight - childHeight) / 2;
+        } else if (i === 0) {
+          itemY = contentY;
+        } else if (i === childrenWithHeight.length - 1) {
+          itemY = contentY + contentHeight - childHeight;
+        } else {
+          const segmentHeight = contentHeight - childrenWithHeight[0].height - childrenWithHeight[childrenWithHeight.length - 1].height;
+          const betweenCount = childrenWithHeight.length - 2;
+          const position = (segmentHeight / betweenCount) * (i - 1) + childrenWithHeight[0].height + gap * (i - 1);
+          itemY = contentY + position;
+        }
       } else if (justifyContent === 'space_evenly') {
         const evenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length + 1);
         itemY = contentY + evenGap * (i + 1) + childrenWithHeight.slice(0, i).reduce((s, c) => s + c.height, 0) + gap * i;
