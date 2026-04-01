@@ -770,79 +770,114 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
   if (layout === 'none') {
     parent.children.forEach(child => renderNode(ctx, child, parentX, parentY, parentWidth, parentHeight));
   } else if (layout === 'horizontal') {
-    const childrenWithWidth = parent.children.map(child => ({ child, width: resolveSize(child.width, contentWidth) || 0 }));
-    const totalChildrenWidth = childrenWithWidth.reduce((s, { width }) => s + width, 0);
-    const totalGapWidth = (childrenWithWidth.length - 1) * gap;
+    // First pass: resolve all child sizes (handle stretch before positioning)
+    const childrenWithData = parent.children.map(child => {
+      let width = resolveSize(child.width, contentWidth) || 0;
+      let height = resolveSize(child.height, contentHeight) || 0;
+      if (alignItems === 'stretch' && !child.height) height = contentHeight;
+      return { child, width, height };
+    });
 
-    let startX = contentX;
-    if (justifyContent === 'center') startX = contentX + (contentWidth - totalChildrenWidth - totalGapWidth) / 2;
-    else if (justifyContent === 'end') startX = contentX + contentWidth - totalChildrenWidth - totalGapWidth;
-    else if (justifyContent === 'space_between') startX = contentX;
-    else if (justifyContent === 'space_around') startX = contentX + (contentWidth - totalChildrenWidth - totalGapWidth) / 2;
-    else if (justifyContent === 'space_evenly') {
-      const evenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length + 1);
-      startX = contentX + evenGap;
+    const n = childrenWithData.length;
+    const totalChildrenWidth = childrenWithData.reduce((s, c) => s + c.width, 0);
+    const totalGapWidth = (n - 1) * gap;
+    const freeSpace = contentWidth - totalChildrenWidth - totalGapWidth;
+
+    // Calculate positions based on justifyContent
+    let itemPositions = [];
+    if (n === 0) {
+      itemPositions = [];
+    } else if (justifyContent === 'start') {
+      let x = contentX;
+      itemPositions = childrenWithData.map(c => { x += (itemPositions.length > 0 ? gap : 0); const pos = x; x += c.width; return pos; });
+    } else if (justifyContent === 'center') {
+      let x = contentX + freeSpace / 2;
+      itemPositions = childrenWithData.map(c => { x += (itemPositions.length > 0 ? gap : 0); const pos = x; x += c.width; return pos; });
+    } else if (justifyContent === 'end') {
+      let x = contentX + freeSpace;
+      itemPositions = childrenWithData.map(c => { x += (itemPositions.length > 0 ? gap : 0); const pos = x; x += c.width; return pos; });
+    } else if (justifyContent === 'space_between' && n > 1) {
+      const betweenGap = (contentWidth - totalChildrenWidth) / (n - 1);
+      let x = contentX;
+      itemPositions = childrenWithData.map(c => { const pos = x; x += c.width + betweenGap; return pos; });
+    } else if (justifyContent === 'space_between') {
+      // Single child: treat as start
+      itemPositions = [contentX];
+    } else if (justifyContent === 'space_around') {
+      const edgeGap = (contentWidth - totalChildrenWidth) / n / 2;
+      const betweenGap = edgeGap * 2;
+      let x = contentX + edgeGap;
+      itemPositions = childrenWithData.map(c => { const pos = x; x += c.width + betweenGap; return pos; });
+    } else if (justifyContent === 'space_evenly') {
+      const evenGap = (contentWidth - totalChildrenWidth) / (n + 1);
+      let x = contentX + evenGap;
+      itemPositions = childrenWithData.map(c => { const pos = x; x += c.width + evenGap; return pos; });
     }
 
-    childrenWithWidth.forEach((item, i) => {
-      const childHeight = resolveSize(item.child.height, contentHeight);
+    // Render children
+    childrenWithData.forEach((item, i) => {
       let childY = contentY;
-      if (alignItems === 'center') childY = contentY + (contentHeight - childHeight) / 2;
-      else if (alignItems === 'end') childY = contentY + contentHeight - childHeight;
-      else if (alignItems === 'stretch') childHeight = contentHeight;
+      if (alignItems === 'center') childY = contentY + (contentHeight - item.height) / 2;
+      else if (alignItems === 'end') childY = contentY + contentHeight - item.height;
+      // stretch already handled in first pass
 
-      let itemX = startX;
-      if (justifyContent === 'space_between') {
-        if (i === 0) itemX = contentX;
-        else if (i === childrenWithWidth.length - 1) itemX = contentX + contentWidth - item.width;
-        else itemX = contentX + (totalChildrenWidth / (childrenWithWidth.length - 1)) * i + gap * (i - 1) + (contentWidth - totalChildrenWidth) / 2;
-      } else if (justifyContent === 'space_evenly') {
-        const evenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length + 1);
-        itemX = contentX + evenGap * (i + 1) + childrenWithWidth.slice(0, i).reduce((s, c) => s + c.width, 0) + gap * i;
-      }
-
-      renderNode(ctx, item.child, itemX, childY, item.width, childHeight);
-      if (justifyContent !== 'space_between' && justifyContent !== 'space_evenly') {
-        startX += item.width + gap;
-      }
+      const itemX = itemPositions[i] || contentX;
+      renderNode(ctx, item.child, itemX, childY, item.width, item.height);
     });
   } else if (layout === 'vertical') {
-    const childrenWithHeight = parent.children.map(child => ({ child, height: resolveSize(child.height, contentHeight) || 0 }));
-    const totalChildrenHeight = childrenWithHeight.reduce((s, { height }) => s + height, 0);
-    const totalGapHeight = (childrenWithHeight.length - 1) * gap;
+    // First pass: resolve all child sizes (handle stretch before positioning)
+    const childrenWithData = parent.children.map(child => {
+      let width = resolveSize(child.width, contentWidth) || 0;
+      let height = resolveSize(child.height, contentHeight) || 0;
+      if (alignItems === 'stretch' && !child.width) width = contentWidth;
+      return { child, width, height };
+    });
 
-    let currentY = contentY;
-    if (justifyContent === 'center') currentY = contentY + (contentHeight - totalChildrenHeight - totalGapHeight) / 2;
-    else if (justifyContent === 'end') currentY = contentY + contentHeight - totalChildrenHeight - totalGapHeight;
-    else if (justifyContent === 'space_between') currentY = contentY;
-    else if (justifyContent === 'space_around') currentY = contentY + (contentHeight - totalChildrenHeight - totalGapHeight) / 2;
-    else if (justifyContent === 'space_evenly') {
-      const evenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length + 1);
-      currentY = contentY + evenGap;
+    const n = childrenWithData.length;
+    const totalChildrenHeight = childrenWithData.reduce((s, c) => s + c.height, 0);
+    const totalGapHeight = (n - 1) * gap;
+    const freeSpace = contentHeight - totalChildrenHeight - totalGapHeight;
+
+    // Calculate positions based on justifyContent
+    let itemPositions = [];
+    if (n === 0) {
+      itemPositions = [];
+    } else if (justifyContent === 'start') {
+      let y = contentY;
+      itemPositions = childrenWithData.map(c => { y += (itemPositions.length > 0 ? gap : 0); const pos = y; y += c.height; return pos; });
+    } else if (justifyContent === 'center') {
+      let y = contentY + freeSpace / 2;
+      itemPositions = childrenWithData.map(c => { y += (itemPositions.length > 0 ? gap : 0); const pos = y; y += c.height; return pos; });
+    } else if (justifyContent === 'end') {
+      let y = contentY + freeSpace;
+      itemPositions = childrenWithData.map(c => { y += (itemPositions.length > 0 ? gap : 0); const pos = y; y += c.height; return pos; });
+    } else if (justifyContent === 'space_between' && n > 1) {
+      const betweenGap = (contentHeight - totalChildrenHeight) / (n - 1);
+      let y = contentY;
+      itemPositions = childrenWithData.map(c => { const pos = y; y += c.height + betweenGap; return pos; });
+    } else if (justifyContent === 'space_between') {
+      // Single child: treat as start
+      itemPositions = [contentY];
+    } else if (justifyContent === 'space_around') {
+      const edgeGap = (contentHeight - totalChildrenHeight) / n / 2;
+      const betweenGap = edgeGap * 2;
+      let y = contentY + edgeGap;
+      itemPositions = childrenWithData.map(c => { const pos = y; y += c.height + betweenGap; return pos; });
+    } else if (justifyContent === 'space_evenly') {
+      const evenGap = (contentHeight - totalChildrenHeight) / (n + 1);
+      let y = contentY + evenGap;
+      itemPositions = childrenWithData.map(c => { const pos = y; y += c.height + evenGap; return pos; });
     }
 
-    parent.children.forEach((child, i) => {
-      const childWidth = resolveSize(child.width, contentWidth);
-      let childHeight = resolveSize(child.height, contentHeight);
+    // Render children
+    childrenWithData.forEach((item, i) => {
       let childX = contentX;
-      if (alignItems === 'center') childX = contentX + (contentWidth - childWidth) / 2;
-      else if (alignItems === 'end') childX = contentX + contentWidth - childWidth;
-      else if (alignItems === 'stretch') childWidth = contentWidth;
+      if (alignItems === 'center') childX = contentX + (contentWidth - item.width) / 2;
+      else if (alignItems === 'end') childX = contentX + contentWidth - item.width;
+      // stretch already handled in first pass
 
-      let itemY = currentY;
-      if (justifyContent === 'space_between') {
-        if (i === 0) itemY = contentY;
-        else if (i === childrenWithHeight.length - 1) itemY = contentY + contentHeight - childHeight;
-        else itemY = contentY + (totalChildrenHeight / (childrenWithHeight.length - 1)) * i + gap * (i - 1) + (contentHeight - totalChildrenHeight) / 2;
-      } else if (justifyContent === 'space_evenly') {
-        const evenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length + 1);
-        itemY = contentY + evenGap * (i + 1) + childrenWithHeight.slice(0, i).reduce((s, c) => s + c.height, 0) + gap * i;
-      }
-
-      renderNode(ctx, child, childX, itemY, childWidth, childHeight);
-      if (justifyContent !== 'space_between' && justifyContent !== 'space_evenly') {
-        currentY += childHeight + gap;
-      }
+      const itemY = itemPositions[i] || contentY;
+      renderNode(ctx, item.child, childX, itemY, item.width, item.height);
     });
   }
 }
