@@ -93,6 +93,7 @@ let panY = 0;
 let renderScale = 1;
 let renderOffsetX = 0;
 let renderOffsetY = 0;
+let parsedDocument = null;
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -183,7 +184,7 @@ function resolveRef(refNode) {
   const component = componentLibrary[refId];
   
   if (!component) {
-    console.warn(`Component "${refId}" not found for ref "${refNode.id}"`);
+    console.warn(`[resolveRef] Component "${refId}" not found for ref "${refNode.id || 'unnamed'}". Available components:`, Object.keys(componentLibrary));
     return null;
   }
   
@@ -200,25 +201,6 @@ function resolveRef(refNode) {
   if (refNode.descendants) {
     return applyDescendants(resolved, refNode.descendants);
   }
-  if (doc.variables) rawVariables = doc.variables;
-  for (const [key, varDef] of Object.entries(rawVariables)) {
-    if (!varDef || !varDef.value) { variables[key] = null; continue; }
-    const values = Array.isArray(varDef.value) ? varDef.value : [{ value: varDef.value }];
-    let matchedValue = null, defaultFallback = null, bestMatchKeys = 0;
-    for (const item of values) {
-      if (!item.theme && !defaultFallback) defaultFallback = item.value;
-      if (item.theme) {
-        let matches = true;
-        for (const [tk, tv] of Object.entries(item.theme)) {
-          if (currentTheme[tk] !== tv) { matches = false; break; }
-        }
-        if (matches) {
-          const matchKeys = Object.keys(item.theme).length;
-          if (matchKeys > bestMatchKeys) {
-            bestMatchKeys = matchKeys;
-            matchedValue = item.value;
-          }
-        }
   
   return resolved;
 }
@@ -409,8 +391,8 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
     renderText(ctx, node, x, y, width, height);
   } else if (node.type === 'icon_font') {
     renderIconFont(ctx, node, x, y, width, height);
-  } else if (node.type === 'ref') {
-    renderReference(ctx, node, parentX, parentY, parentWidth, parentHeight);
+  } else {
+    console.warn(`[renderNode] Unknown node type: ${node.type}`, node);
   }
   ctx.restore();
   if (node.children && node.children.length > 0) renderChildren(ctx, node, x, y, width, height);
@@ -421,28 +403,70 @@ function renderIconFont(ctx, node, x, y, width, height) {
   const iconFamily = node.iconFontFamily || 'lucide';
   const iconName = node.iconFontName || '';
   const fillColor = resolveColor(node.fill) || '#000';
+  
+  // Extended Unicode icon map for common Lucide icons
   const iconMap = {
+    // Navigation
     'chevrons-up-down': '⇅', 'chevron-down': '▼', 'chevron-up': '▲',
-    'chevron-left': '◀', 'chevron-right': '▶', 'menu': '☰', 'search': '🔍',
-    'home': '⌂', 'user': '👤', 'settings': '⚙', 'bell': '🔔', 'heart': '❤',
-    'star': '★', 'plus': '+', 'minus': '−', 'x': '×', 'check': '✓', 'hexagon': '⬡',
-    'circle': '○', 'square': '□', 'triangle': '△'
+    'chevron-left': '◀', 'chevron-right': '▶', 'chevrons-left': '⏴', 'chevrons-right': '⏵',
+    'menu': '☰', 'x': '×', 'plus': '+', 'minus': '−', 'check': '✓',
+    // Actions
+    'search': '🔍', 'home': '⌂', 'user': '👤', 'users': '👥', 'settings': '⚙',
+    'bell': '🔔', 'heart': '❤', 'star': '★', 'bookmark': '🔖', 'calendar': '📅',
+    'clock': '🕐', 'mail': '✉', 'phone': '☎', 'camera': '📷', 'image': '🖼',
+    'video': '🎥', 'music': '🎵', 'mic': '🎤', 'volume': '🔊', 'volume-x': '🔇',
+    // UI
+    'circle': '○', 'square': '□', 'triangle': '△', 'hexagon': '⬡', 'octagon': '⬢',
+    'box': '📦', 'folder': '📁', 'file': '📄', 'file-text': '📃', 'clipboard': '📋',
+    'trash': '🗑', 'edit': '✏', 'save': '💾', 'download': '⬇', 'upload': '⬆',
+    'share': '🔗', 'link': '🔗', 'external-link': '↗', 'copy': '📑', 'layers': '📚',
+    // Arrows
+    'arrow-up': '↑', 'arrow-down': '↓', 'arrow-left': '←', 'arrow-right': '→',
+    'arrow-up-right': '↗', 'arrow-down-left': '↙', 'move': '✥',
+    // Status
+    'alert-circle': '⚠', 'alert-triangle': '⚠', 'info': 'ℹ', 'check-circle': '✓',
+    'x-circle': '✕', 'help-circle': '?', 'loader': '⟳', 'refresh': '↻',
+    // Commerce
+    'shopping-cart': '🛒', 'credit-card': '💳', 'dollar-sign': '$', 'percent': '%',
+    // Media
+    'play': '▶', 'pause': '⏸', 'stop': '⏹', 'skip-forward': '⏭', 'skip-back': '⏮',
+    'maximize': '⤢', 'minimize': '⤡', 'zoom-in': '🔍', 'zoom-out': '🔎',
+    // Misc
+    'sun': '☀', 'moon': '☾', 'cloud': '☁', 'rain': '🌧', 'snow': '❄',
+    'wind': '💨', 'thermometer': '🌡', 'map': '🗺', 'map-pin': '📍',
+    'globe': '🌍', 'compass': '🧭', 'flag': '🚩', 'award': '🏆', 'gift': '🎁',
+    'lock': '🔒', 'unlock': '🔓', 'key': '🔑', 'shield': '🛡', 'eye': '👁',
+    'eye-off': '🚫', 'hash': '#', 'at': '@', 'quote': '"', 'slash': '/'
   };
-  const iconChar = iconMap[iconName] || '◦';
+  
+  const iconChar = iconMap[iconName];
+  if (!iconChar) {
+    console.warn(`[renderIconFont] Icon "${iconName}" not found in icon map, using fallback`);
+  }
+  const displayChar = iconChar || '◦';
+  
   ctx.save();
   ctx.fillStyle = fillColor;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   const fontSize = Math.min(width, height) * 0.7 || 16;
   ctx.font = `${fontSize}px Arial, sans-serif`;
-  ctx.fillText(iconChar, x + width / 2, y + height / 2);
+  ctx.fillText(displayChar, x + width / 2, y + height / 2);
   ctx.restore();
 }
 
 // Render component reference
 function renderReference(ctx, node, parentX, parentY, parentWidth, parentHeight) {
   const refId = node.ref;
-  if (!refId || !parsedDocument) return;
+  if (!refId) {
+    console.warn('[renderReference] Missing ref id', node);
+    return;
+  }
+  if (!parsedDocument) {
+    console.warn('[renderReference] parsedDocument not available for ref:', refId);
+    return;
+  }
+  
   let refComponent = null;
   if (parsedDocument.components && parsedDocument.components.has(refId)) {
     refComponent = parsedDocument.components.get(refId).node;
@@ -457,12 +481,16 @@ function renderReference(ctx, node, parentX, parentY, parentWidth, parentHeight)
     };
     refComponent = findComponent(parsedDocument.children);
   }
-  if (refComponent) {
-    const refX = parentX + (node.x || 0);
-    const refY = parentY + (node.y || 0);
-    const clonedNode = { ...refComponent, x: refX, y: refY };
-    renderNode(ctx, clonedNode, parentX, parentY, parentWidth, parentHeight);
+  
+  if (!refComponent) {
+    console.warn(`[renderReference] Component "${refId}" not found. Available:`, parsedDocument.components ? Array.from(parsedDocument.components.keys()) : 'none');
+    return;
   }
+  
+  const refX = parentX + (node.x || 0);
+  const refY = parentY + (node.y || 0);
+  const clonedNode = { ...refComponent, x: refX, y: refY };
+  renderNode(ctx, clonedNode, parentX, parentY, parentWidth, parentHeight);
 }
 
 // Parse SVG-like path commands
