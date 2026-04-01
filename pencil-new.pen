@@ -1,5 +1,5 @@
 {
-  "version": "2.8",
+  "version": "2.9",
   "children": [
     {
       "type": "frame",
@@ -1346,6 +1346,8 @@
                     {
                       "type": "text",
                       "id": "vIMKE",
+                      "x": 0,
+                      "y": 0,
                       "name": "0",
                       "enabled": false,
                       "fill": "$--foreground",
@@ -1377,6 +1379,8 @@
                     {
                       "type": "text",
                       "id": "qM9xF",
+                      "x": 0,
+                      "y": 0,
                       "name": "0",
                       "enabled": false,
                       "fill": "$--foreground",
@@ -1414,6 +1418,8 @@
                     {
                       "type": "text",
                       "id": "dL6MK",
+                      "x": 0,
+                      "y": 0,
                       "name": "0",
                       "enabled": false,
                       "fill": "$--foreground",
@@ -1483,6 +1489,8 @@
                     {
                       "type": "text",
                       "id": "Hlbwf",
+                      "x": 0,
+                      "y": 0,
                       "name": "0",
                       "enabled": false,
                       "fill": "$--foreground",
@@ -1514,6 +1522,8 @@
                     {
                       "type": "text",
                       "id": "MBOXD",
+                      "x": 0,
+                      "y": 0,
                       "name": "0",
                       "enabled": false,
                       "fill": "$--foreground",
@@ -1551,6 +1561,8 @@
                     {
                       "type": "text",
                       "id": "iEjWl",
+                      "x": 0,
+                      "y": 0,
                       "name": "0",
                       "enabled": false,
                       "fill": "$--foreground",
@@ -2100,7 +2112,15 @@
           "ref": "pfIN1",
           "x": 200,
           "y": 352,
+          "height": "fit_content",
           "descendants": {
+            "ekbu5": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "CPImI": {
+              "y": 16
+            },
             "9eSLt": {
               "type": "frame",
               "id": "hqut2",
@@ -2133,7 +2153,11 @@
               ]
             },
             "h6oCR": {
-              "enabled": false
+              "enabled": false,
+              "height": "fit_content"
+            },
+            "IaDRg": {
+              "width": "fill_container"
             }
           }
         },
@@ -2150,7 +2174,17 @@
             "fill": "$--destructive"
           },
           "width": "fill_container(480)",
+          "height": "fit_content",
           "descendants": {
+            "LuqyG": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 16,
+              "y": 16
+            },
+            "LGayV": {
+              "y": 2
+            },
             "DeaWZ": {
               "stroke": {
                 "align": "center",
@@ -2178,11 +2212,19 @@
                 "fill": "$--destructive"
               }
             },
+            "Q1t8n": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "x": 48,
+              "y": 16
+            },
             "nbvca": {
               "fill": "$--destructive"
             },
             "W4UBy": {
-              "fill": "$--destructive"
+              "fill": "$--destructive",
+              "width": "fill_container",
+              "y": 28
             }
           }
         },
@@ -2215,9 +2257,13 @@
           "y": 1296,
           "fill": "$--secondary",
           "name": "Badge/Secondary",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
             "zHpCv": {
-              "fill": "$--secondary-foreground"
+              "fill": "$--secondary-foreground",
+              "x": 8,
+              "y": 2
             }
           }
         },
@@ -2230,9 +2276,13 @@
           "y": 1356,
           "fill": "$--destructive",
           "name": "Badge/Destructive",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
             "zHpCv": {
-              "fill": "$--white"
+              "fill": "$--white",
+              "x": 8,
+              "y": 2
             }
           }
         },
@@ -2250,9 +2300,13 @@
             "fill": "$--border"
           },
           "name": "Badge/Outline",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
             "zHpCv": {
-              "fill": "$--foreground"
+              "fill": "$--foreground",
+              "x": 8,
+              "y": 2
             }
           }
         },
@@ -2265,6 +2319,8 @@
           "y": 1536,
           "fill": [],
           "name": "Breadcrumb Item/Default",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
             "Xm9Ew": {
               "fill": "$--muted-foreground"
@@ -2322,7 +2378,13 @@
           "y": 1656,
           "padding": 8,
           "name": "Icon Button/Large/Default",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "RO4Ll": {
+              "x": 8,
+              "y": 8
+            },
             "NEMHS": {
               "enabled": false
             }
@@ -2337,7 +2399,13 @@
           "y": 1732,
           "padding": 8,
           "name": "Icon Button/Large/Secondary",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "AOTZ7": {
+              "x": 8,
+              "y": 8
+            },
             "g9Wxn": {
               "enabled": false
             }
@@ -2352,7 +2420,13 @@
           "y": 1808,
           "padding": 8,
           "name": "Icon Button/Large/Destructive",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "4wJMf": {
+              "x": 8,
+              "y": 8
+            },
             "HazGS": {
               "enabled": false
             }
@@ -2367,7 +2441,13 @@
           "y": 1884,
           "padding": 8,
           "name": "Icon Button/Large/Outline",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "vLff5": {
+              "x": 8,
+              "y": 8
+            },
             "ydXf3": {
               "enabled": false
             }
@@ -2382,7 +2462,13 @@
           "y": 1960,
           "padding": 8,
           "name": "Icon Button/Large/Ghost",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "h6Jgb": {
+              "x": 8,
+              "y": 8
+            },
             "ujxmL": {
               "enabled": false
             }
@@ -2397,7 +2483,13 @@
           "y": 1656,
           "padding": 8,
           "name": "Icon Button/Default",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "8jVfJ": {
+              "x": 8,
+              "y": 8
+            },
             "8tnXG": {
               "enabled": false
             }
@@ -2412,7 +2504,13 @@
           "y": 1732,
           "padding": 8,
           "name": "Icon Button/Secondary",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "soROh": {
+              "x": 8,
+              "y": 8
+            },
             "Tr3Fv": {
               "enabled": false
             }
@@ -2427,7 +2525,13 @@
           "y": 1808,
           "padding": 8,
           "name": "Icon Button/Destructive",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "PqjlB": {
+              "x": 8,
+              "y": 8
+            },
             "NDadS": {
               "enabled": false
             }
@@ -2442,7 +2546,13 @@
           "y": 1884,
           "padding": 8,
           "name": "Icon Button/Outline",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "l8v2I": {
+              "x": 8,
+              "y": 8
+            },
             "poRwU": {
               "enabled": false
             }
@@ -2456,7 +2566,13 @@
           "x": 544,
           "y": 1960,
           "padding": 8,
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "AeXMI": {
+              "x": 8,
+              "y": 8
+            },
             "UZfKV": {
               "enabled": false
             }
@@ -2590,9 +2706,13 @@
           "name": "Tab Item/Inactive",
           "fill": [],
           "effect": [],
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
             "qYQHc": {
-              "fill": "$--muted-foreground"
+              "fill": "$--muted-foreground",
+              "x": 12,
+              "y": 6
             }
           }
         },
@@ -2634,9 +2754,13 @@
               "ref": "coMmv",
               "x": 4,
               "y": 4,
+              "width": "fit_content",
+              "height": "fit_content",
               "descendants": {
                 "qYQHc": {
-                  "content": "Integrations"
+                  "content": "Integrations",
+                  "x": 12,
+                  "y": 6
                 }
               }
             },
@@ -2646,9 +2770,13 @@
               "ref": "QY0Ka",
               "x": 116,
               "y": 4,
+              "width": "fit_content",
+              "height": "fit_content",
               "descendants": {
                 "qYQHc": {
-                  "content": "Billing"
+                  "content": "Billing",
+                  "x": 12,
+                  "y": 6
                 }
               }
             },
@@ -2658,9 +2786,13 @@
               "ref": "QY0Ka",
               "x": 189,
               "y": 4,
+              "width": "fit_content",
+              "height": "fit_content",
               "descendants": {
                 "qYQHc": {
-                  "content": "Profile"
+                  "content": "Profile",
+                  "x": 12,
+                  "y": 6
                 }
               }
             },
@@ -2670,9 +2802,13 @@
               "ref": "QY0Ka",
               "x": 265,
               "y": 4,
+              "width": "fit_content",
+              "height": "fit_content",
               "descendants": {
                 "qYQHc": {
-                  "content": "Advanced"
+                  "content": "Advanced",
+                  "x": 12,
+                  "y": 6
                 }
               }
             }
@@ -2693,6 +2829,7 @@
           "descendants": {
             "CgJv7": {
               "height": "fit_content",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "text",
@@ -2730,6 +2867,7 @@
             "bvhSM": {
               "width": "fill_container",
               "height": "fit_content",
+              "y": 104,
               "children": [
                 {
                   "id": "NtF0f",
@@ -2737,12 +2875,16 @@
                   "ref": "VSnC2",
                   "x": 24,
                   "y": 24,
+                  "width": "fit_content",
+                  "height": "fit_content",
                   "descendants": {
                     "8jVfJ": {
                       "enabled": false
                     },
                     "8tnXG": {
-                      "content": "Continue"
+                      "content": "Continue",
+                      "x": 16,
+                      "y": 8
                     }
                   }
                 },
@@ -2752,12 +2894,16 @@
                   "ref": "C10zH",
                   "x": 125,
                   "y": 24,
+                  "width": "fit_content",
+                  "height": "fit_content",
                   "descendants": {
                     "l8v2I": {
                       "enabled": false
                     },
                     "poRwU": {
-                      "content": "Cancel"
+                      "content": "Cancel",
+                      "x": 16,
+                      "y": 8
                     }
                   }
                 }
@@ -3013,9 +3159,31 @@
           "x": 900,
           "y": 530,
           "name": "List Item/Unchecked",
+          "height": "fit_content",
           "descendants": {
+            "kxJ89": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 8,
+              "y": 6
+            },
+            "Jj249": {
+              "y": 2
+            },
             "RTXW4": {
               "enabled": false
+            },
+            "R8Ps1": {
+              "x": 24
+            },
+            "22sgp": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 175,
+              "y": 8
+            },
+            "MW4DH": {
+              "x": 41
             }
           }
         },
@@ -3106,9 +3274,17 @@
           "x": 900,
           "y": 674,
           "name": "List Search Box/Default",
+          "height": "fit_content",
           "descendants": {
+            "emAje": {
+              "x": 8,
+              "y": 8
+            },
             "tAA5L": {
-              "fill": "$--muted-foreground"
+              "fill": "$--muted-foreground",
+              "width": "fill_container",
+              "x": 32,
+              "y": 6
             },
             "9e0Mf": {
               "enabled": false
@@ -3123,9 +3299,17 @@
           "x": 2100,
           "y": 1212,
           "name": "Radio/Unselected",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
+            "9ebgg": {
+              "y": 2
+            },
             "A16Ri": {
               "enabled": false
+            },
+            "GPiWl": {
+              "x": 24
             }
           }
         },
@@ -3137,11 +3321,21 @@
           "x": 2100,
           "y": 1396,
           "name": "Switch/Unchecked",
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
             "AgS9m": {
               "justifyContent": "start",
               "alignItems": "center",
               "fill": "$--input"
+            },
+            "Fin40": {
+              "x": 2,
+              "y": 2
+            },
+            "HsFun": {
+              "x": 56,
+              "y": 2
             }
           }
         },
@@ -3228,6 +3422,8 @@
           "ref": "ovuDP",
           "x": 2100,
           "y": 1580,
+          "width": "fit_content",
+          "height": "fit_content",
           "descendants": {
             "kfU2y": {
               "stroke": {
@@ -3235,10 +3431,16 @@
                 "thickness": 1,
                 "fill": "$--input"
               },
-              "fill": "$--primary-foreground"
+              "fill": "$--primary-foreground",
+              "y": 2
             },
             "5n2yq": {
               "enabled": false
+            },
+            "dszbm": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 24
             }
           }
         },
@@ -3250,13 +3452,26 @@
           "x": 2100,
           "y": 1806,
           "name": "Input Group/Filled",
+          "height": "fit_content",
           "descendants": {
             "QRy7x": {
-              "enabled": true
+              "enabled": true,
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "BX0XX": {
+              "width": "fill_container"
+            },
+            "i0Z3E": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 26
             },
             "SDRKn": {
               "fill": "$--foreground",
-              "content": "Input Value"
+              "content": "Input Value",
+              "x": 12,
+              "y": 10
             }
           }
         },
@@ -3268,9 +3483,22 @@
           "x": 2100,
           "y": 1912,
           "name": "Input/Default",
+          "height": "fit_content",
           "descendants": {
             "QRy7x": {
-              "enabled": false
+              "enabled": false,
+              "height": "fit_content"
+            },
+            "BX0XX": {
+              "width": "fill_container"
+            },
+            "i0Z3E": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "SDRKn": {
+              "x": 12,
+              "y": 10
             }
           }
         },
@@ -3282,13 +3510,24 @@
           "x": 2100,
           "y": 1992,
           "name": "Input/Filled",
+          "height": "fit_content",
           "descendants": {
             "QRy7x": {
-              "enabled": false
+              "enabled": false,
+              "height": "fit_content"
+            },
+            "BX0XX": {
+              "width": "fill_container"
+            },
+            "i0Z3E": {
+              "width": "fill_container",
+              "height": "fit_content"
             },
             "SDRKn": {
               "fill": "$--foreground",
-              "content": "Input Value"
+              "content": "Input Value",
+              "x": 12,
+              "y": 10
             }
           }
         },
@@ -3300,10 +3539,30 @@
           "x": 2100.160669376255,
           "y": 2239,
           "name": "Select Group/Filled",
+          "height": "fit_content",
           "descendants": {
+            "c8G05": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "Yd2lV": {
+              "width": "fill_container"
+            },
+            "Ch62V": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 26
+            },
             "V1STL": {
               "fill": "$--foreground",
-              "content": "Selected Option"
+              "content": "Selected Option",
+              "width": "fill_container",
+              "x": 12,
+              "y": 10
+            },
+            "lsKbB": {
+              "x": 246,
+              "y": 12
             }
           }
         },
@@ -3410,10 +3669,30 @@
           "x": 2100.160669376255,
           "y": 2513,
           "name": "Combobox/Default",
+          "height": "fit_content",
           "descendants": {
+            "dkouC": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "mNzWI": {
+              "width": "fill_container"
+            },
+            "SS77i": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 26
+            },
             "bj34E": {
               "content": "Selected Option",
-              "fill": "$--foreground"
+              "fill": "$--foreground",
+              "width": "fill_container",
+              "x": 12,
+              "y": 10
+            },
+            "zNxvQ": {
+              "x": 246,
+              "y": 12
             }
           }
         },
@@ -3425,24 +3704,79 @@
           "x": 2100,
           "y": 2786,
           "name": "Input OTP Group/Filled",
+          "height": "fit_content",
           "descendants": {
+            "Dnb63": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "3RstF": {
+              "width": "fill_container"
+            },
+            "nGQJv": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 26
+            },
+            "0TODM": {
+              "width": "fill_container"
+            },
             "vIMKE": {
-              "enabled": true
+              "enabled": true,
+              "x": 15.5,
+              "y": 10
+            },
+            "gUH1w": {
+              "width": "fill_container",
+              "x": 39
             },
             "qM9xF": {
-              "enabled": true
+              "enabled": true,
+              "x": 15.5,
+              "y": 10
+            },
+            "m9owt": {
+              "width": "fill_container",
+              "x": 78
             },
             "dL6MK": {
-              "enabled": true
+              "enabled": true,
+              "x": 15.5,
+              "y": 10
+            },
+            "lRQJN": {
+              "x": 117
+            },
+            "wgSK2": {
+              "x": 16,
+              "y": 10
+            },
+            "6lyN0": {
+              "width": "fill_container",
+              "x": 156
             },
             "Hlbwf": {
-              "enabled": true
+              "enabled": true,
+              "x": 15.5,
+              "y": 10
+            },
+            "CLUSe": {
+              "width": "fill_container",
+              "x": 195
             },
             "MBOXD": {
-              "enabled": true
+              "enabled": true,
+              "x": 15.5,
+              "y": 10
+            },
+            "6gzzE": {
+              "width": "fill_container",
+              "x": 234
             },
             "iEjWl": {
-              "enabled": true
+              "enabled": true,
+              "x": 15.5,
+              "y": 10
             }
           }
         },
@@ -3454,10 +3788,24 @@
           "x": 2100,
           "y": 3098,
           "name": "Textarea Group/Filled",
+          "height": "fit_content",
           "descendants": {
+            "uAcGD": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "a78kl": {
+              "width": "fill_container"
+            },
+            "pzw5I": {
+              "width": "fill_container",
+              "y": 26
+            },
             "S4qWY": {
               "content": "Input Value",
-              "fill": "$--foreground"
+              "fill": "$--foreground",
+              "x": 12,
+              "y": 8
             }
           }
         },
@@ -3501,6 +3849,7 @@
           "descendants": {
             "CgJv7": {
               "height": "fit_content",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "text",
@@ -3530,19 +3879,32 @@
                 }
               ]
             },
+            "frWPV": {
+              "width": "fill_container",
+              "y": 104
+            },
             "bvhSM": {
               "height": "fit_content",
+              "width": "fill_container",
+              "y": 172,
               "children": [
                 {
                   "id": "L6Ngo",
                   "type": "ref",
                   "ref": "C3KOZ",
                   "x": 24,
-                  "y": 24.019943701668048,
+                  "y": 24.01994370166805,
                   "width": "fill_container",
+                  "height": "fit_content",
                   "descendants": {
+                    "RO4Ll": {
+                      "x": 39,
+                      "y": 8
+                    },
                     "NEMHS": {
-                      "content": "Action"
+                      "content": "Action",
+                      "x": 69,
+                      "y": 10
                     }
                   }
                 },
@@ -3554,9 +3916,16 @@
                   "y": 24.039888780686216,
                   "rotation": 0.015035913220233593,
                   "width": "fill_container",
+                  "height": "fit_content",
                   "descendants": {
+                    "vLff5": {
+                      "x": 39,
+                      "y": 8
+                    },
                     "ydXf3": {
-                      "content": "Action"
+                      "content": "Action",
+                      "x": 69,
+                      "y": 10
                     }
                   }
                 }
@@ -3572,12 +3941,57 @@
           "x": 2100,
           "y": 500,
           "name": "Modal/Center",
+          "height": "fit_content",
           "descendants": {
+            "CgJv7": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
             "EOpIo": {
-              "textAlign": "center"
+              "textAlign": "center",
+              "width": "fill_container",
+              "x": 24,
+              "y": 24
             },
             "bVY1H": {
-              "textAlign": "center"
+              "textAlign": "center",
+              "width": "fill_container",
+              "x": 24,
+              "y": 60
+            },
+            "frWPV": {
+              "width": "fill_container",
+              "y": 104
+            },
+            "bvhSM": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 172
+            },
+            "L6Ngo": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 24.01994370166805
+            },
+            "L6Ngo/RO4Ll": {
+              "x": 39,
+              "y": 8
+            },
+            "L6Ngo/NEMHS": {
+              "x": 69,
+              "y": 10
+            },
+            "T9BdN": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "T9BdN/vLff5": {
+              "x": 39,
+              "y": 8
+            },
+            "T9BdN/ydXf3": {
+              "x": 69,
+              "y": 10
             }
           }
         },
@@ -3589,7 +4003,12 @@
           "x": 2100,
           "y": 800,
           "name": "Modal/Icon",
+          "height": "fit_content",
           "descendants": {
+            "CgJv7": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
             "EOpIo": {
               "type": "frame",
               "id": "vbPtf",
@@ -3619,6 +4038,40 @@
             },
             "bVY1H": {
               "enabled": false
+            },
+            "frWPV": {
+              "width": "fill_container",
+              "y": 96
+            },
+            "bvhSM": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 164
+            },
+            "L6Ngo": {
+              "width": "fill_container",
+              "height": "fit_content",
+              "y": 24.01994370166805
+            },
+            "L6Ngo/RO4Ll": {
+              "x": 39,
+              "y": 8
+            },
+            "L6Ngo/NEMHS": {
+              "x": 69,
+              "y": 10
+            },
+            "T9BdN": {
+              "width": "fill_container",
+              "height": "fit_content"
+            },
+            "T9BdN/vLff5": {
+              "x": 39,
+              "y": 8
+            },
+            "T9BdN/ydXf3": {
+              "x": 69,
+              "y": 10
             }
           }
         },
@@ -3677,7 +4130,13 @@
             "align": "inside",
             "thickness": 1
           },
-          "effect": []
+          "effect": [],
+          "descendants": {
+            "JP14e": {
+              "x": 17,
+              "y": 10
+            }
+          }
         },
         {
           "id": "MqebB",
@@ -3721,12 +4180,16 @@
               "ref": "l7zpS",
               "x": 0,
               "y": 2,
+              "width": "fit_content",
+              "height": "fit_content",
               "descendants": {
                 "h6Jgb": {
                   "enabled": false
                 },
                 "ujxmL": {
-                  "content": "Previous"
+                  "content": "Previous",
+                  "x": 24,
+                  "y": 8
                 }
               }
             },
@@ -3754,12 +4217,16 @@
                 8,
                 24
               ],
+              "width": "fit_content",
+              "height": "fit_content",
               "descendants": {
                 "h6Jgb": {
                   "enabled": false
                 },
                 "ujxmL": {
-                  "content": "Next"
+                  "content": "Next",
+                  "x": 24,
+                  "y": 8
                 }
               }
             }
@@ -3781,6 +4248,7 @@
           "descendants": {
             "CgJv7": {
               "height": "fit_content",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "text",
@@ -3799,6 +4267,8 @@
             },
             "frWPV": {
               "height": "fit_content",
+              "width": "fill_container",
+              "y": 72,
               "children": [
                 {
                   "type": "text",
@@ -3817,6 +4287,8 @@
             },
             "bvhSM": {
               "height": "fit_content",
+              "width": "fill_container",
+              "y": 168,
               "children": [
                 {
                   "id": "C8MFo",
@@ -3824,9 +4296,17 @@
                   "ref": "C10zH",
                   "x": 24,
                   "y": 24,
+                  "width": "fit_content",
+                  "height": "fit_content",
                   "descendants": {
+                    "l8v2I": {
+                      "x": 16,
+                      "y": 8
+                    },
                     "poRwU": {
-                      "content": "Request"
+                      "content": "Request",
+                      "x": 42,
+                      "y": 8
                     }
                   }
                 }
@@ -3843,9 +4323,11 @@
           "y": 2959,
           "width": 320,
           "name": "Card Plain",
+          "height": "fit_content",
           "descendants": {
             "CgJv7": {
               "height": "fit_content",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "text",
@@ -3864,6 +4346,8 @@
             },
             "frWPV": {
               "height": "fit_content",
+              "width": "fill_container",
+              "y": 72,
               "children": [
                 {
                   "type": "text",
@@ -3884,9 +4368,13 @@
                   "ref": "UjXug",
                   "x": 24,
                   "y": 68,
+                  "width": "fit_content",
+                  "height": "fit_content",
                   "descendants": {
                     "zHpCv": {
-                      "content": "-12%"
+                      "content": "-12%",
+                      "x": 8,
+                      "y": 2
                     }
                   }
                 }
@@ -3914,6 +4402,7 @@
           "descendants": {
             "CgJv7": {
               "height": "fit_content",
+              "width": "fill_container",
               "children": [
                 {
                   "type": "frame",
@@ -3935,6 +4424,8 @@
             },
             "frWPV": {
               "height": "fit_content",
+              "width": "fill_container",
+              "y": 208,
               "children": [
                 {
                   "type": "text",
@@ -3966,6 +4457,8 @@
             },
             "bvhSM": {
               "justifyContent": "space_between",
+              "width": "fill_container",
+              "y": 318,
               "children": [
                 {
                   "id": "Jt3oM",
@@ -3973,9 +4466,13 @@
                   "ref": "UjXug",
                   "x": 24,
                   "y": 24,
+                  "width": "fit_content",
+                  "height": "fit_content",
                   "descendants": {
                     "zHpCv": {
-                      "content": "$45.00"
+                      "content": "$45.00",
+                      "x": 8,
+                      "y": 2
                     }
                   }
                 },
@@ -3985,9 +4482,17 @@
                   "ref": "C10zH",
                   "x": 131,
                   "y": 16,
+                  "width": "fit_content",
+                  "height": "fit_content",
                   "descendants": {
+                    "l8v2I": {
+                      "x": 16,
+                      "y": 8
+                    },
                     "poRwU": {
-                      "content": "Add to favorites"
+                      "content": "Add to favorites",
+                      "x": 42,
+                      "y": 8
                     }
                   }
                 }
@@ -4141,7 +4646,28 @@
           "y": 2303,
           "name": "Sidebar Item/Default",
           "fill": [],
-          "rotation": 0
+          "rotation": 0,
+          "height": "fit_content",
+          "descendants": {
+            "SxIMP": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 8,
+              "y": 6
+            },
+            "nmQwi": {
+              "y": 2
+            },
+            "0Ru22": {
+              "x": 24
+            },
+            "ttBco": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 216,
+              "y": 8
+            }
+          }
         },
         {
           "type": "frame",
@@ -4165,9 +4691,22 @@
               "ref": "fEUdI",
               "x": 0,
               "y": 0,
+              "height": "fit_content",
               "descendants": {
+                "QRy7x": {
+                  "height": "fit_content"
+                },
+                "BX0XX": {
+                  "width": "fill_container"
+                },
+                "i0Z3E": {
+                  "width": "fill_container",
+                  "height": "fit_content"
+                },
                 "SDRKn": {
-                  "content": "Search"
+                  "content": "Search",
+                  "x": 12,
+                  "y": 10
                 }
               }
             },
@@ -4176,7 +4715,19 @@
               "type": "ref",
               "ref": "ghKmL",
               "x": 902,
-              "y": 0
+              "y": 0,
+              "width": "fit_content",
+              "height": "fit_content",
+              "descendants": {
+                "vLff5": {
+                  "x": 24,
+                  "y": 8
+                },
+                "ydXf3": {
+                  "x": 54,
+                  "y": 10
+                }
+              }
             }
           ]
         },
@@ -4212,7 +4763,31 @@
               "type": "ref",
               "ref": "U5noB",
               "x": 797,
-              "y": 0
+              "y": 0,
+              "width": "fit_content",
+              "height": "fit_content",
+              "descendants": {
+                "dL111": {
+                  "width": "fit_content",
+                  "height": "fit_content"
+                },
+                "dL111/ujxmL": {
+                  "x": 24,
+                  "y": 8
+                },
+                "VBg6X": {
+                  "x": 107
+                },
+                "mQBD7": {
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 147
+                },
+                "mQBD7/ujxmL": {
+                  "x": 24,
+                  "y": 8
+                }
+              }
             }
           ]
         },
@@ -4355,9 +4930,11 @@
                     {
                       "type": "frame",
                       "id": "sdtLabel1",
+                      "x": 0,
+                      "y": 0,
                       "name": "Label Text",
                       "enabled": false,
-                      "width": "fill_container",
+                      "width": "fill_container(0)",
                       "fill": {
                         "type": "color",
                         "color": "$--white",
@@ -4427,7 +5004,19 @@
                   "type": "ref",
                   "ref": "ghKmL",
                   "x": 902,
-                  "y": 0
+                  "y": 0,
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "descendants": {
+                    "vLff5": {
+                      "x": 24,
+                      "y": 8
+                    },
+                    "ydXf3": {
+                      "x": 54,
+                      "y": 10
+                    }
+                  }
                 }
               ]
             },
@@ -4450,86 +5039,42 @@
               "type": "ref",
               "ref": "RXiR9",
               "x": 0,
-              "y": 332
+              "y": 332,
+              "height": "fit_content",
+              "descendants": {
+                "9PRbJ": {
+                  "y": 10
+                },
+                "SMRMo": {
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 797
+                },
+                "SMRMo/dL111": {
+                  "width": "fit_content",
+                  "height": "fit_content"
+                },
+                "SMRMo/dL111/ujxmL": {
+                  "x": 24,
+                  "y": 8
+                },
+                "SMRMo/VBg6X": {
+                  "x": 107
+                },
+                "SMRMo/mQBD7": {
+                  "width": "fit_content",
+                  "height": "fit_content",
+                  "x": 147
+                },
+                "SMRMo/mQBD7/ujxmL": {
+                  "x": 24,
+                  "y": 8
+                }
+              }
             }
           ]
         }
       ]
-    },
-    {
-      "type": "prompt",
-      "id": "j4hLC",
-      "x": 3053,
-      "y": -384,
-      "model": "cursor-composer",
-      "width": 400,
-      "height": 219,
-      "content": "Design a dashboard with a sidebar on the left into \"dashboard-utility\" frame for a utility company showing current usage and a history in a table."
-    },
-    {
-      "type": "frame",
-      "id": "nSNTs",
-      "x": 3053,
-      "y": -10,
-      "name": "dashboard-utility",
-      "theme": {
-        "Mode": "Light"
-      },
-      "clip": true,
-      "width": 1440,
-      "height": "fit_content(900)",
-      "fill": "$--background"
-    },
-    {
-      "type": "prompt",
-      "id": "b6D19",
-      "x": 3053,
-      "y": 1037,
-      "model": "cursor-composer",
-      "width": 400,
-      "height": 219,
-      "content": "Design a dashboard into \"dashboard-revenue\" frame for a revenue tracking app with a sidebar, showing revenue stats, history in the content."
-    },
-    {
-      "type": "frame",
-      "id": "TZ4am",
-      "x": 3053,
-      "y": 1422,
-      "name": "dashboard-revenue",
-      "theme": {
-        "Mode": "Light"
-      },
-      "clip": true,
-      "width": 1440,
-      "height": "fit_content(717)",
-      "fill": "$--background"
-    },
-    {
-      "type": "prompt",
-      "id": "QGYHK",
-      "x": 3053,
-      "y": 2320.9999999999995,
-      "model": "cursor-composer",
-      "width": 400,
-      "height": 219,
-      "content": "Design a dashboard into \"dashboard-football\" frame with a table ranking UEFA teams. Show goal counts, captain name, etc. Put stats on the top."
-    },
-    {
-      "type": "frame",
-      "id": "6LMCW",
-      "x": 3053,
-      "y": 2652.9999999999995,
-      "name": "dashboard-football",
-      "theme": {
-        "Mode": "Light"
-      },
-      "clip": true,
-      "width": 1440,
-      "height": 933,
-      "fill": "$--background",
-      "layout": "vertical",
-      "gap": 24,
-      "padding": 32
     }
   ],
   "themes": {
