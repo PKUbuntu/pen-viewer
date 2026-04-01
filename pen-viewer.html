@@ -677,15 +677,46 @@ function renderText(ctx, node, x, y, width, height) {
   if (!fillColor) return;
 
   ctx.fillStyle = fillColor;
-  const fontSize = node.fontSize || 14;
-  const fontWeight = node.fontWeight || 'normal';
-  const fontFamily = node.fontFamily || '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+  
+  const fontSize = node.fontSize ?? 14;
+  
+  // 改进 fontWeight 解析 - 支持数字和字符串
+  let fontWeight = node.fontWeight ?? 'normal';
+  if (typeof fontWeight === 'number') {
+    fontWeight = fontWeight.toString();
+  } else if (typeof fontWeight === 'string') {
+    const weightMap = {
+      'thin': '100', 'hairline': '100',
+      'extra-light': '200', 'ultra-light': '200',
+      'light': '300',
+      'normal': '400', 'regular': '400',
+      'medium': '500',
+      'semi-bold': '600', 'demi-bold': '600',
+      'bold': '700',
+      'extra-bold': '800', 'ultra-bold': '800',
+      'black': '900', 'heavy': '900'
+    };
+    fontWeight = weightMap[fontWeight.toLowerCase()] || fontWeight;
+  }
+  
+  // 改进 fontFamily 处理
+  let fontFamily = node.fontFamily;
+  if (!fontFamily || typeof fontFamily !== 'string') {
+    fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+  } else if (!fontFamily.includes('sans-serif')) {
+    fontFamily = fontFamily + ', sans-serif';
+  }
+  
   ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.textAlign = node.textAlign || 'left';
   ctx.textBaseline = node.textBaseline || 'top';
+  
+  // 提高文字渲染质量
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
   const content = node.content || '';
-  const lineHeight = node.lineHeight || fontSize * 1.2;
+  const lineHeight = node.lineHeight ?? (fontSize * 1.2);
   const textAlignVertical = node.textAlignVertical || 'start';
 
   let textX = x;
