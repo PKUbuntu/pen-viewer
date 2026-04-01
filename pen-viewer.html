@@ -875,9 +875,34 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
     // Render children
     childrenWithData.forEach((item, i) => {
       let childY = contentY;
+<<<<<<< fix/layout-spacing-issue-8
+      if (alignItems === 'center') childY = contentY + (contentHeight - childHeight) / 2;
+      else if (alignItems === 'end') childY = contentY + contentHeight - childHeight;
+      else if (alignItems === 'stretch') childHeight = contentHeight;
+
+      let itemX = startX;
+      if (justifyContent === 'space_between') {
+        if (childrenWithWidth.length === 1) {
+          itemX = contentX + (contentWidth - item.width) / 2;
+        } else if (i === 0) {
+          itemX = contentX;
+        } else if (i === childrenWithWidth.length - 1) {
+          itemX = contentX + contentWidth - item.width;
+        } else {
+          const segmentWidth = contentWidth - childrenWithWidth[0].width - childrenWithWidth[childrenWithWidth.length - 1].width;
+          const betweenCount = childrenWithWidth.length - 2;
+          const position = (segmentWidth / betweenCount) * (i - 1) + childrenWithWidth[0].width + gap * (i - 1);
+          itemX = contentX + position;
+        }
+      } else if (justifyContent === 'space_evenly') {
+        const evenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length + 1);
+        itemX = contentX + evenGap * (i + 1) + childrenWithWidth.slice(0, i).reduce((s, c) => s + c.width, 0) + gap * i;
+      }
+=======
       if (alignItems === 'center') childY = contentY + (contentHeight - item.height) / 2;
       else if (alignItems === 'end') childY = contentY + contentHeight - item.height;
       // stretch already handled in first pass
+>>>>>>> master
 
       const itemX = itemPositions[i] || contentX;
       renderNode(ctx, item.child, itemX, childY, item.width, item.height);
@@ -930,9 +955,34 @@ function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight
     // Render children
     childrenWithData.forEach((item, i) => {
       let childX = contentX;
+<<<<<<< fix/layout-spacing-issue-8
+      if (alignItems === 'center') childX = contentX + (contentWidth - childWidth) / 2;
+      else if (alignItems === 'end') childX = contentX + contentWidth - childWidth;
+      else if (alignItems === 'stretch') childWidth = contentWidth;
+
+      let itemY = currentY;
+      if (justifyContent === 'space_between') {
+        if (childrenWithHeight.length === 1) {
+          itemY = contentY + (contentHeight - childHeight) / 2;
+        } else if (i === 0) {
+          itemY = contentY;
+        } else if (i === childrenWithHeight.length - 1) {
+          itemY = contentY + contentHeight - childHeight;
+        } else {
+          const segmentHeight = contentHeight - childrenWithHeight[0].height - childrenWithHeight[childrenWithHeight.length - 1].height;
+          const betweenCount = childrenWithHeight.length - 2;
+          const position = (segmentHeight / betweenCount) * (i - 1) + childrenWithHeight[0].height + gap * (i - 1);
+          itemY = contentY + position;
+        }
+      } else if (justifyContent === 'space_evenly') {
+        const evenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length + 1);
+        itemY = contentY + evenGap * (i + 1) + childrenWithHeight.slice(0, i).reduce((s, c) => s + c.height, 0) + gap * i;
+      }
+=======
       if (alignItems === 'center') childX = contentX + (contentWidth - item.width) / 2;
       else if (alignItems === 'end') childX = contentX + contentWidth - item.width;
       // stretch already handled in first pass
+>>>>>>> master
 
       const itemY = itemPositions[i] || contentY;
       renderNode(ctx, item.child, childX, itemY, item.width, item.height);
