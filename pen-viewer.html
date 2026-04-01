@@ -4,6 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>.pen Viewer</title>
+
+  <script src="pen-parser.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: "hsl(var(--border))",
+            background: "hsl(var(--background))",
+            foreground: "hsl(var(--foreground))",
+            primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
+            secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
+            muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
+            accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
+            destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
+          },
+        },
+      },
+    }
+  </script>
+
   <style>
     :root {
       --background: 0 0% 100%;
@@ -50,8 +75,13 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+// Initialize parser
+const parser = typeof PenParser !== 'undefined' ? new PenParser() : null;
+
 let variables = {};
 let rawVariables = {};
+let componentLibrary = {};
+
 let currentTheme = { Mode: 'Light', Base: 'Neutral', Accent: 'Default' };
 let currentZoom = 100;
 let penDocument = null;
@@ -70,11 +100,105 @@ function resizeCanvas() {
   if (penDocument) renderDocument(penDocument);
 }
 
-function resolveVariables(doc) {
-  variables = {};
-  rawVariables = {};
-  if (doc.children && doc.children[0] && doc.children[0].theme) {
-    currentTheme = { ...currentTheme, ...doc.children[0].theme };
+// Build component library from reusable elements
+function buildComponentLibrary(doc) {
+  componentLibrary = {};
+  
+  function traverse(node) {
+    if (node && typeof node === 'object') {
+      if (node.reusable === true && node.id) {
+        componentLibrary[node.id] = node;
+      }
+      if (node.children && Array.isArray(node.children)) {
+        node.children.forEach(traverse);
+      }
+    }
+  }
+  
+  if (doc.children) {
+    doc.children.forEach(traverse);
+  }
+}
+
+// Apply descendant overrides to a component
+function applyDescendants(component, descendants) {
+  if (!descendants) return component;
+  
+  // Deep clone the component
+  const cloned = JSON.parse(JSON.stringify(component));
+  
+  // Apply overrides recursively
+  function applyOverride(node, overrides) {
+    if (!overrides || typeof overrides !== 'object') return;
+    
+    // Apply direct property overrides
+    for (const [key, value] of Object.entries(overrides)) {
+      if (key === 'type' && typeof value === 'object') {
+        // This is a full node replacement
+        Object.assign(node, value);
+        return;
+      }
+      if (key !== 'id' && key !== 'children' && value !== undefined) {
+        node[key] = value;
+      }
+    }
+  }
+  
+  // Process each descendant override
+  for (const [descId, override] of Object.entries(descendants)) {
+    applyDescendantOverride(cloned, descId, override);
+  }
+  
+  return cloned;
+}
+
+// Find and apply override to a specific descendant by id
+function applyDescendantOverride(node, targetId, override) {
+  if (!node) return;
+  
+  if (node.id === targetId) {
+    // Check if this is a full node replacement
+    if (override.type && typeof override.type === 'object') {
+      Object.assign(node, override);
+    } else {
+      // Apply property overrides
+      for (const [key, value] of Object.entries(override)) {
+        if (key !== 'id' && value !== undefined) {
+          node[key] = value;
+        }
+      }
+    }
+    return;
+  }
+  
+  // Recurse into children
+  if (node.children && Array.isArray(node.children)) {
+    node.children.forEach(child => applyDescendantOverride(child, targetId, override));
+  }
+}
+
+// Resolve a ref to its component with descendants applied
+function resolveRef(refNode) {
+  const refId = refNode.ref;
+  const component = componentLibrary[refId];
+  
+  if (!component) {
+    console.warn(`Component "${refId}" not found for ref "${refNode.id}"`);
+    return null;
+  }
+  
+  // Clone and apply the ref's properties
+  const resolved = JSON.parse(JSON.stringify(component));
+  
+  // Apply ref's position and size
+  if (refNode.x !== undefined) resolved.x = refNode.x;
+  if (refNode.y !== undefined) resolved.y = refNode.y;
+  if (refNode.width !== undefined) resolved.width = refNode.width;
+  if (refNode.height !== undefined) resolved.height = refNode.height;
+  
+  // Apply descendant overrides
+  if (refNode.descendants) {
+    return applyDescendants(resolved, refNode.descendants);
   }
   if (doc.variables) rawVariables = doc.variables;
   for (const [key, varDef] of Object.entries(rawVariables)) {
@@ -95,13 +219,45 @@ function resolveVariables(doc) {
             matchedValue = item.value;
           }
         }
-      }
+  
+  return resolved;
+}
+
+function resolveVariables(doc) {
+  if (parser) {
+    parsedDocument = parser.parse(doc);
+    variables = parsedDocument.variables;
+    rawVariables = parsedDocument.rawVariables;
+    if (parsedDocument.theme) currentTheme = { ...currentTheme, ...parsedDocument.theme };
+  } else {
+    variables = {}; rawVariables = {};
+    if (doc.children && doc.children[0] && doc.children[0].theme) {
+      currentTheme = { ...currentTheme, ...doc.children[0].theme };
     }
-    variables[key] = matchedValue || defaultFallback;
+    if (doc.variables) rawVariables = doc.variables;
+    for (const [key, varDef] of Object.entries(rawVariables)) {
+      if (!varDef || !varDef.value) { variables[key] = null; continue; }
+      const values = Array.isArray(varDef.value) ? varDef.value : [{ value: varDef.value }];
+      let matchedValue = null, defaultFallback = null;
+      for (const item of values) {
+        if (!item.theme && !defaultFallback) defaultFallback = item.value;
+        if (item.theme) {
+          let matches = true;
+          for (const [tk, tv] of Object.entries(item.theme)) {
+            if (currentTheme[tk] !== tv) { matches = false; break; }
+          }
+          if (matches) { matchedValue = item.value; break; }
+        }
+      }
+      variables[key] = matchedValue || defaultFallback;
+    }
   }
+  // Build component library after resolving variables
+  buildComponentLibrary(doc);
 }
 
 function resolveColor(color) {
+  if (parser && typeof parser.resolveColor === 'function') return parser.resolveColor(color);
   if (!color) return null;
   if (typeof color === 'string') {
     if (color.startsWith('$')) return variables[color.slice(1)] || '#888';
@@ -111,6 +267,10 @@ function resolveColor(color) {
 }
 
 function resolveSize(val, parentSize = 0) {
+  if (parser && typeof parser.resolveValue === 'function') {
+    const resolved = parser.resolveValue(val, { parentSize });
+    if (resolved !== null && resolved !== undefined) return resolved;
+  }
   if (val === 'fill_container') return parentSize;
   if (val === 'fit_content') return null;
   if (typeof val === 'string' && val.startsWith('$')) return variables[val.slice(1)] || 0;
@@ -118,6 +278,7 @@ function resolveSize(val, parentSize = 0) {
 }
 
 function resolveStrokeThickness(thickness) {
+  if (parser && typeof parser.resolveStrokeThickness === 'function') return parser.resolveStrokeThickness(thickness);
   if (thickness === undefined || thickness === null) return 1;
   if (typeof thickness === 'number') return thickness;
   if (typeof thickness === 'object') return Math.max(thickness.top || 0, thickness.right || 0, thickness.bottom || 0, thickness.left || 0) || 1;
@@ -141,13 +302,31 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 }
 
 function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parentHeight = 0) {
+  if (!node || !node.type) return;
+  
+  // Handle ref type - resolve to actual component
+  if (node.type === 'ref') {
+    const resolved = resolveRef(node);
+    if (resolved) {
+      renderNode(ctx, resolved, parentX, parentY, parentWidth, parentHeight);
+    }
+    return;
+  }
+  
   const x = parentX + (node.x || 0);
   const y = parentY + (node.y || 0);
-  const width = resolveSize(node.width, parentWidth);
-  const height = resolveSize(node.height, parentHeight);
-  if (width <= 0 || height <= 0) return;
+  let width = resolveSize(node.width, parentWidth);
+  let height = resolveSize(node.height, parentHeight);
+  
+  // Handle fit_content and missing dimensions
+  if (!node.width) width = parentWidth;
+  if (!node.height) height = parentHeight;
+  if (width === null || width <= 0) width = 100;
+  if (height === null || height <= 0) height = 100;
+  
   ctx.save();
   if (node.opacity !== undefined) ctx.globalAlpha = node.opacity;
+  if (node.enabled === false) ctx.globalAlpha = 0.5;
 
   if (node.type === 'frame' || node.type === 'rectangle') {
     if (node.effect && node.effect.type === 'shadow') {
@@ -209,9 +388,10 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
   } else if (node.type === 'path') {
     const strokeColor = resolveColor(node.stroke?.fill || node.fill);
     const fillPathColor = resolveColor(node.fill);
-    if (node.path) {
+    const pathData = node.path || node.geometry;
+    if (pathData) {
       ctx.beginPath();
-      const pathCommands = parsePath(node.path);
+      const pathCommands = parsePath(pathData);
       drawPath(ctx, pathCommands, x, y, width, height);
       if (fillPathColor) {
         ctx.fillStyle = fillPathColor;
@@ -227,9 +407,62 @@ function renderNode(ctx, node, parentX = 0, parentY = 0, parentWidth = 0, parent
     renderImage(ctx, node, x, y, width, height);
   } else if (node.type === 'text') {
     renderText(ctx, node, x, y, width, height);
+  } else if (node.type === 'icon_font') {
+    renderIconFont(ctx, node, x, y, width, height);
+  } else if (node.type === 'ref') {
+    renderReference(ctx, node, parentX, parentY, parentWidth, parentHeight);
   }
   ctx.restore();
   if (node.children && node.children.length > 0) renderChildren(ctx, node, x, y, width, height);
+}
+
+// Render icon font (Lucide, Material Icons, etc.)
+function renderIconFont(ctx, node, x, y, width, height) {
+  const iconFamily = node.iconFontFamily || 'lucide';
+  const iconName = node.iconFontName || '';
+  const fillColor = resolveColor(node.fill) || '#000';
+  const iconMap = {
+    'chevrons-up-down': '⇅', 'chevron-down': '▼', 'chevron-up': '▲',
+    'chevron-left': '◀', 'chevron-right': '▶', 'menu': '☰', 'search': '🔍',
+    'home': '⌂', 'user': '👤', 'settings': '⚙', 'bell': '🔔', 'heart': '❤',
+    'star': '★', 'plus': '+', 'minus': '−', 'x': '×', 'check': '✓', 'hexagon': '⬡',
+    'circle': '○', 'square': '□', 'triangle': '△'
+  };
+  const iconChar = iconMap[iconName] || '◦';
+  ctx.save();
+  ctx.fillStyle = fillColor;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const fontSize = Math.min(width, height) * 0.7 || 16;
+  ctx.font = `${fontSize}px Arial, sans-serif`;
+  ctx.fillText(iconChar, x + width / 2, y + height / 2);
+  ctx.restore();
+}
+
+// Render component reference
+function renderReference(ctx, node, parentX, parentY, parentWidth, parentHeight) {
+  const refId = node.ref;
+  if (!refId || !parsedDocument) return;
+  let refComponent = null;
+  if (parsedDocument.components && parsedDocument.components.has(refId)) {
+    refComponent = parsedDocument.components.get(refId).node;
+  }
+  if (!refComponent && parsedDocument.children) {
+    const findComponent = (children) => {
+      for (const child of children) {
+        if (child.id === refId) return child;
+        if (child.children) { const found = findComponent(child.children); if (found) return found; }
+      }
+      return null;
+    };
+    refComponent = findComponent(parsedDocument.children);
+  }
+  if (refComponent) {
+    const refX = parentX + (node.x || 0);
+    const refY = parentY + (node.y || 0);
+    const clonedNode = { ...refComponent, x: refX, y: refY };
+    renderNode(ctx, clonedNode, parentX, parentY, parentWidth, parentHeight);
+  }
 }
 
 // Parse SVG-like path commands
@@ -247,8 +480,8 @@ function parsePath(pathStr) {
 
 // Draw path commands on canvas
 function drawPath(ctx, commands, x, y, width, height) {
-  let currentX = 0, currentY = 0;
-  let startX = 0, startY = 0;
+  let currentX = x, currentY = y;
+  let startX = currentX, startY = currentY;
   let lastControlX = 0, lastControlY = 0;
 
   for (const { cmd, args } of commands) {
@@ -577,6 +810,47 @@ function renderDocument(doc) {
     });
     ctx.restore();
   }
+  
+  // 更新叠加的 shadcn 组件位置
+  updateComponentOverlay();
+}
+
+function extractComponents(node, parentX = 0, parentY = 0, result = []) {
+  const x = parentX + (node.x || 0);
+  const y = parentY + (node.y || 0);
+  let width = node.width;
+  let height = node.height;
+  if (typeof width !== 'number' || width <= 0) width = 100;
+  if (typeof height !== 'number' || height <= 0) height = 100;
+  // Support icon_font type
+  if (node.name && node.id && node.type && ['frame', 'rectangle', 'ellipse', 'text', 'icon_font'].includes(node.type)) {
+    const skipNames = ['Frame', 'Rectangle', 'Ellipse', 'Text', 'Group', 'Vector', 'Line', 'Circle'];
+    if (!skipNames.includes(node.name)) {
+      result.push({ id: node.id, name: node.name, type: node.type, reusable: node.reusable || false, x, y, width, height });
+    }
+  }
+  if (node.children && Array.isArray(node.children)) {
+    node.children.forEach(child => extractComponents(child, x, y, result));
+  }
+  return result;
+}
+
+function loadAndRender(doc) {
+  penDocument = doc;
+  components = [];
+  // Use parser to extract components if available
+  if (parser && parsedDocument) {
+    components = parser.extractComponents(parsedDocument);
+  } else {
+    if (doc.children) doc.children.forEach(child => extractComponents(child, 0, 0, components));
+  }
+  renderReactList();
+  activeComponentId = null;
+  panX = 0; panY = 0; currentZoom = 100;
+  document.getElementById('zoomSlider').value = 100;
+  document.getElementById('zoomValue').textContent = '100%';
+  renderDocument(doc);
+
 }
 
 async function loadSample() {

@@ -31,9 +31,11 @@ A web-based renderer for `.pen` files - the design format used by [Pencil.dev](h
 | Flexbox Layout | ✅ |
 | Gap / Padding | ✅ |
 | Justify / Align | ✅ |
+| Icon Fonts | ✅ |
+| Component Refs | ✅ |
+| Theme Variables | ✅ |
 | Gradient Fill | 🚧 |
-| Component Refs | 🚧 |
-| Path | 🚧 |
+| Path/SVG | 🚧 |
 | Image Fill | 🚧 |
 
 ## Usage
@@ -46,6 +48,27 @@ const response = await fetch('design.pen');
 const doc = await response.json();
 renderDocument(doc);
 ```
+
+### Using the Parser Module
+
+The `pen-parser.js` module provides a standalone parser for .pen files:
+
+```javascript
+const parser = new PenParser();
+const parsed = parser.parse(penJson);
+const components = parser.extractComponents(parsed);
+const color = parser.resolveColor(variableRef);
+```
+
+### Parser API
+
+- `parse(input)` - Parse a .pen document
+- `resolveValue(value, context)` - Resolve variable references
+- `resolveColor(color)` - Resolve color values
+- `resolveStrokeThickness(thickness)` - Handle stroke thickness
+- `resolveReference(refId)` - Look up component references
+- `extractComponents(doc)` - Extract all components
+- `validate(doc)` - Validate document structure
 
 ### Example .pen structure
 
@@ -93,12 +116,12 @@ open http://localhost:8888/pen-viewer.html
 ## Roadmap
 
 - [ ] Gradient fill support
-- [ ] Component instance resolution
 - [ ] Path/SVG rendering
 - [ ] Image fill
-- [ ] Theme switching
+- [ ] Theme switching UI
 - [ ] Interactive canvas (zoom, pan, select)
 - [ ] Export to PNG/SVG
+- [ ] Slot mechanism full implementation
 
 ## References
 
