@@ -542,97 +542,164 @@ function truncateText(ctx, text, maxWidth) {
 function renderChildren(ctx, parent, parentX, parentY, parentWidth, parentHeight) {
   if (!parent.children || parent.children.length === 0) return;
   const layout = parent.layout || 'none';
-  const padding = parent.padding || 0;
-  const gap = parent.gap || 0;
+  
+  // 解析 padding - 支持数字、数组（2 个或 4 个值）
+  const padding = parent.padding ?? 0;
+  let paddingTop = 0, paddingRight = 0, paddingBottom = 0, paddingLeft = 0;
+  if (Array.isArray(padding)) {
+    if (padding.length === 2) {
+      paddingTop = paddingBottom = padding[0] ?? 0;
+      paddingLeft = paddingRight = padding[1] ?? 0;
+    } else if (padding.length >= 4) {
+      [paddingTop, paddingRight, paddingBottom, paddingLeft] = padding.map(v => v ?? 0);
+    }
+  } else {
+    const p = padding ?? 0;
+    paddingTop = paddingRight = paddingBottom = paddingLeft = p;
+  }
+  
+  const gap = parent.gap ?? 0;
   const justifyContent = parent.justifyContent || 'start';
   const alignItems = parent.alignItems || 'start';
-  let paddingTop, paddingRight, paddingBottom, paddingLeft;
-  if (Array.isArray(padding)) {
-    if (padding.length === 2) { paddingTop = paddingBottom = padding[0]; paddingLeft = paddingRight = padding[1]; }
-    else if (padding.length === 4) [paddingTop, paddingRight, paddingBottom, paddingLeft] = padding;
-  } else { paddingTop = paddingRight = paddingBottom = paddingLeft = padding; }
+  
   const contentX = parentX + paddingLeft;
   const contentY = parentY + paddingTop;
-  const contentWidth = parentWidth - paddingLeft - paddingRight;
-  const contentHeight = parentHeight - paddingTop - paddingBottom;
+  const contentWidth = Math.max(0, parentWidth - paddingLeft - paddingRight);
+  const contentHeight = Math.max(0, parentHeight - paddingTop - paddingBottom);
 
   if (layout === 'none') {
     parent.children.forEach(child => renderNode(ctx, child, parentX, parentY, parentWidth, parentHeight));
-  } else if (layout === 'horizontal') {
-    const childrenWithWidth = parent.children.map(child => ({ child, width: resolveSize(child.width, contentWidth) || 0 }));
+    return;
+  }
+  
+  if (layout === 'horizontal') {
+    const childrenWithWidth = parent.children.map(child => ({ 
+      child, 
+      width: resolveSize(child.width, contentWidth) ?? 0 
+    }));
     const totalChildrenWidth = childrenWithWidth.reduce((s, { width }) => s + width, 0);
-    const totalGapWidth = (childrenWithWidth.length - 1) * gap;
+    const totalGapWidth = Math.max(0, childrenWithWidth.length - 1) * gap;
 
     let startX = contentX;
-    if (justifyContent === 'center') startX = contentX + (contentWidth - totalChildrenWidth - totalGapWidth) / 2;
-    else if (justifyContent === 'end') startX = contentX + contentWidth - totalChildrenWidth - totalGapWidth;
-    else if (justifyContent === 'space_between') startX = contentX;
-    else if (justifyContent === 'space_around') startX = contentX + (contentWidth - totalChildrenWidth - totalGapWidth) / 2;
-    else if (justifyContent === 'space_evenly') {
-      const evenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length + 1);
-      startX = contentX + evenGap;
+    const availableSpace = contentWidth - totalChildrenWidth - totalGapWidth;
+    
+    if (justifyContent === 'center') {
+      startX = contentX + availableSpace / 2;
+    } else if (justifyContent === 'end') {
+      startX = contentX + availableSpace;
+    } else if (justifyContent === 'space_between' && childrenWithWidth.length > 1) {
+      startX = contentX;
+    } else if (justifyContent === 'space_around') {
+      startX = contentX + availableSpace / 2;
+    } else if (justifyContent === 'space_evenly') {
+      startX = contentX;
     }
 
+    let currentX = startX;
     childrenWithWidth.forEach((item, i) => {
-      const childHeight = resolveSize(item.child.height, contentHeight);
+      const childHeight = resolveSize(item.child.height, contentHeight) ?? item.child.height ?? 0;
       let childY = contentY;
-      if (alignItems === 'center') childY = contentY + (contentHeight - childHeight) / 2;
-      else if (alignItems === 'end') childY = contentY + contentHeight - childHeight;
-      else if (alignItems === 'stretch') childHeight = contentHeight;
+      
+      if (alignItems === 'center') {
+        childY = contentY + (contentHeight - childHeight) / 2;
+      } else if (alignItems === 'end') {
+        childY = contentY + contentHeight - childHeight;
+      } else if (alignItems === 'stretch') {
+        // stretch 模式下使用完整内容高度
+      }
 
-      let itemX = startX;
-      if (justifyContent === 'space_between') {
-        if (i === 0) itemX = contentX;
-        else if (i === childrenWithWidth.length - 1) itemX = contentX + contentWidth - item.width;
-        else itemX = contentX + (totalChildrenWidth / (childrenWithWidth.length - 1)) * i + gap * (i - 1) + (contentWidth - totalChildrenWidth) / 2;
-      } else if (justifyContent === 'space_evenly') {
+      let itemX = currentX;
+      
+      // space_between: 第一个和最后一个贴边，中间均匀分布
+      if (justifyContent === 'space_between' && childrenWithWidth.length > 1) {
+        if (i === 0) {
+          itemX = contentX;
+        } else if (i === childrenWithWidth.length - 1) {
+          itemX = contentX + contentWidth - item.width;
+        } else {
+          const betweenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length - 1);
+          itemX = contentX + i * betweenGap + childrenWithWidth.slice(0, i).reduce((s, c) => s + c.width, 0);
+        }
+      } 
+      // space_evenly: 包括两端的间隙都相等
+      else if (justifyContent === 'space_evenly') {
         const evenGap = (contentWidth - totalChildrenWidth) / (childrenWithWidth.length + 1);
-        itemX = contentX + evenGap * (i + 1) + childrenWithWidth.slice(0, i).reduce((s, c) => s + c.width, 0) + gap * i;
+        itemX = contentX + evenGap * (i + 1) + childrenWithWidth.slice(0, i).reduce((s, c) => s + c.width, 0);
       }
 
       renderNode(ctx, item.child, itemX, childY, item.width, childHeight);
+      
+      // 更新下一个元素的位置（仅用于 start/center/end/space_around）
       if (justifyContent !== 'space_between' && justifyContent !== 'space_evenly') {
-        startX += item.width + gap;
+        currentX = itemX + item.width + gap;
       }
     });
-  } else if (layout === 'vertical') {
-    const childrenWithHeight = parent.children.map(child => ({ child, height: resolveSize(child.height, contentHeight) || 0 }));
+    return;
+  }
+  
+  if (layout === 'vertical') {
+    const childrenWithHeight = parent.children.map(child => ({ 
+      child, 
+      height: resolveSize(child.height, contentHeight) ?? 0 
+    }));
     const totalChildrenHeight = childrenWithHeight.reduce((s, { height }) => s + height, 0);
-    const totalGapHeight = (childrenWithHeight.length - 1) * gap;
+    const totalGapHeight = Math.max(0, childrenWithHeight.length - 1) * gap;
 
     let currentY = contentY;
-    if (justifyContent === 'center') currentY = contentY + (contentHeight - totalChildrenHeight - totalGapHeight) / 2;
-    else if (justifyContent === 'end') currentY = contentY + contentHeight - totalChildrenHeight - totalGapHeight;
-    else if (justifyContent === 'space_between') currentY = contentY;
-    else if (justifyContent === 'space_around') currentY = contentY + (contentHeight - totalChildrenHeight - totalGapHeight) / 2;
-    else if (justifyContent === 'space_evenly') {
-      const evenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length + 1);
-      currentY = contentY + evenGap;
+    const availableSpace = contentHeight - totalChildrenHeight - totalGapHeight;
+    
+    if (justifyContent === 'center') {
+      currentY = contentY + availableSpace / 2;
+    } else if (justifyContent === 'end') {
+      currentY = contentY + availableSpace;
+    } else if (justifyContent === 'space_between' && childrenWithHeight.length > 1) {
+      currentY = contentY;
+    } else if (justifyContent === 'space_around') {
+      currentY = contentY + availableSpace / 2;
+    } else if (justifyContent === 'space_evenly') {
+      currentY = contentY;
     }
 
     parent.children.forEach((child, i) => {
-      const childWidth = resolveSize(child.width, contentWidth);
-      let childHeight = resolveSize(child.height, contentHeight);
+      const childWidth = resolveSize(child.width, contentWidth) ?? child.width ?? 0;
+      let childHeight = childrenWithHeight[i].height;
       let childX = contentX;
-      if (alignItems === 'center') childX = contentX + (contentWidth - childWidth) / 2;
-      else if (alignItems === 'end') childX = contentX + contentWidth - childWidth;
-      else if (alignItems === 'stretch') childWidth = contentWidth;
+      
+      if (alignItems === 'center') {
+        childX = contentX + (contentWidth - childWidth) / 2;
+      } else if (alignItems === 'end') {
+        childX = contentX + contentWidth - childWidth;
+      } else if (alignItems === 'stretch') {
+        // stretch 模式下使用完整内容宽度
+      }
 
       let itemY = currentY;
-      if (justifyContent === 'space_between') {
-        if (i === 0) itemY = contentY;
-        else if (i === childrenWithHeight.length - 1) itemY = contentY + contentHeight - childHeight;
-        else itemY = contentY + (totalChildrenHeight / (childrenWithHeight.length - 1)) * i + gap * (i - 1) + (contentHeight - totalChildrenHeight) / 2;
-      } else if (justifyContent === 'space_evenly') {
+      
+      // space_between: 第一个和最后一个贴边，中间均匀分布
+      if (justifyContent === 'space_between' && childrenWithHeight.length > 1) {
+        if (i === 0) {
+          itemY = contentY;
+        } else if (i === childrenWithHeight.length - 1) {
+          itemY = contentY + contentHeight - childHeight;
+        } else {
+          const betweenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length - 1);
+          itemY = contentY + i * betweenGap + childrenWithHeight.slice(0, i).reduce((s, c) => s + c.height, 0);
+        }
+      } 
+      // space_evenly: 包括两端的间隙都相等
+      else if (justifyContent === 'space_evenly') {
         const evenGap = (contentHeight - totalChildrenHeight) / (childrenWithHeight.length + 1);
-        itemY = contentY + evenGap * (i + 1) + childrenWithHeight.slice(0, i).reduce((s, c) => s + c.height, 0) + gap * i;
+        itemY = contentY + evenGap * (i + 1) + childrenWithHeight.slice(0, i).reduce((s, c) => s + c.height, 0);
       }
 
       renderNode(ctx, child, childX, itemY, childWidth, childHeight);
+      
+      // 更新下一个元素的位置（仅用于 start/center/end/space_around）
       if (justifyContent !== 'space_between' && justifyContent !== 'space_evenly') {
-        currentY += childHeight + gap;
+        currentY = itemY + childHeight + gap;
       }
     });
+    return;
   }
 }
 
